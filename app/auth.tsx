@@ -1,5 +1,4 @@
 import { Center } from '@/components/ui/center';
-import { Checkbox, CheckboxIcon, CheckboxIndicator, CheckboxLabel } from '@/components/ui/checkbox';
 import { FormControl } from '@/components/ui/form-control';
 import { HStack } from '@/components/ui/hstack';
 import { Image } from '@/components/ui/image';
@@ -9,12 +8,25 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import authenticateUser from '../src/middleware/auth';
+import showAlert from './screens/alert';
 
 const brand = require("../assets/images/ias_logo_black.png");
 
 export default function LoginScreen() {
     const router = useRouter();
     const [rememberMe, setRememberMe] = useState(false);
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+
+    const onAuthSubmit = async () => {
+        const isAuthenticated = await authenticateUser(email,password)
+        if (isAuthenticated) showAlert("Authentication Successful","User Logged In successfully");
+        else showAlert("Authentication Failed","Invalid Credentials");
+
+    }
 
     return (
         <Center className="flex-1 bg-white">
@@ -28,13 +40,13 @@ export default function LoginScreen() {
 
                 <FormControl>
                     <Input variant="outline" className="w-full self-center">
-                        <InputField placeholder="Email" />
+                        <InputField value={email} onChangeText={setEmail} placeholder="Email" />
                     </Input>
                 </FormControl>
 
                 <FormControl>
                     <Input variant="outline" className="w-full self-center">
-                        <InputField placeholder="Password" type="password" />
+                        <InputField value={password} onChangeText={setPassword} placeholder="Password" type="password" />
                     </Input>
                 </FormControl>
 
@@ -42,7 +54,7 @@ export default function LoginScreen() {
 
                 {/* Login Button */}
                 <Pressable
-                    onPress={() => router.push('/dashboard')}
+                    onPress={onAuthSubmit}
                     className="bg-blue-500 py-2 px-5 rounded-md items-center"
                 >
                     <Text className="text-white font-bold">Login</Text>
@@ -50,7 +62,7 @@ export default function LoginScreen() {
 
                 {/* Remember Me & Forgot Password */}
                 <HStack className="justify-between flex flex-col gap-5 items-center w-full">
-                    <Checkbox
+                    {/* <Checkbox
                         value={rememberMe}
                         isChecked={rememberMe}
                         onChange={setRememberMe}
@@ -60,7 +72,7 @@ export default function LoginScreen() {
                             <CheckboxIcon />
                         </CheckboxIndicator>
                         <CheckboxLabel className="ml-2 text-sm">Remember Me?</CheckboxLabel>
-                    </Checkbox>
+                    </Checkbox> */}
 
                     <Pressable>
                         <Text className="text-sm text-blue-600 font-medium">Forgot Password?</Text>

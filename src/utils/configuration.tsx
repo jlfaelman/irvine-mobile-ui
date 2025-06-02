@@ -32,6 +32,6 @@ const db_config = [
     },
 ];
 
-export function getDBConfig(connection_string) {
+export function getDBConfig(connection_string: string) {
     return db_config.find(cfg => cfg.connection_string === connection_string)?.config;
 }
