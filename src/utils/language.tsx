@@ -1,5 +1,8 @@
-const language_file = {
-    english:{
-        
-    }
+import English from '../language/english'
+
+const language = {
+    english: English
 }
+
+
+export default language 

@@ -6,8 +6,10 @@ import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { getRefreshToken, getToken } from '@/src/middleware/jwt';
+import language from '@/src/utils/language';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import authenticateUser from '../src/middleware/auth';
 import showAlert from './screens/alert';
 
@@ -20,11 +22,29 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
+    useEffect(() => {
+        const authUser = async () => {
+            const token = await getToken();
+            const refreshToken = await getRefreshToken();
+            // check if token exists
+            if (token && refreshToken) {
+                router.push('/dashboard')
+            }
+        };
+
+        authUser();
+    }, [])
 
     const onAuthSubmit = async () => {
-        const isAuthenticated = await authenticateUser(email,password)
-        if (isAuthenticated) showAlert("Authentication Successful","User Logged In successfully");
-        else showAlert("Authentication Failed","Invalid Credentials");
+
+        const isAuthenticated = await authenticateUser(email, password)
+        if (isAuthenticated) {
+            showAlert(language.english.auth.alert.login_success.title, language.english.auth.alert.login_success.message);
+            router.push('/dashboard');
+        }
+        else {
+            showAlert(language.english.auth.alert.login_failed.title, language.english.auth.alert.login_failed.message);
+        }
 
     }
 
@@ -40,13 +60,13 @@ export default function LoginScreen() {
 
                 <FormControl>
                     <Input variant="outline" className="w-full self-center">
-                        <InputField value={email} onChangeText={setEmail} placeholder="Email" />
+                        <InputField value={email} onChangeText={setEmail} placeholder={language.english.auth.placeholder.email} />
                     </Input>
                 </FormControl>
 
                 <FormControl>
                     <Input variant="outline" className="w-full self-center">
-                        <InputField value={password} onChangeText={setPassword} placeholder="Password" type="password" />
+                        <InputField value={password} onChangeText={setPassword} placeholder={language.english.auth.placeholder.password} type="password" />
                     </Input>
                 </FormControl>
 
@@ -57,7 +77,7 @@ export default function LoginScreen() {
                     onPress={onAuthSubmit}
                     className="bg-blue-500 py-2 px-5 rounded-md items-center"
                 >
-                    <Text className="text-white font-bold">Login</Text>
+                    <Text className="text-white font-bold">{language.english.auth.button.submit}</Text>
                 </Pressable>
 
                 {/* Remember Me & Forgot Password */}
@@ -75,7 +95,7 @@ export default function LoginScreen() {
                     </Checkbox> */}
 
                     <Pressable>
-                        <Text className="text-sm text-blue-600 font-medium">Forgot Password?</Text>
+                        <Text className="text-sm text-blue-600 font-medium">{language.english.auth.button.forgot_password}</Text>
                     </Pressable>
                 </HStack>
             </VStack>
