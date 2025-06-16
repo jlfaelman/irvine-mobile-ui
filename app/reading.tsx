@@ -15,62 +15,73 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { createJob, getJobs } from '@/src/middleware/job';
+import { Location } from '@/src/interface/dashboard';
+import { createJob } from '@/src/middleware/job';
+import STATUS from '@/src/utils/status';
+import { formatForDateTimeLocalInput } from '@/src/utils/timestamp';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Platform, View } from 'react-native';
 
+
+
 export default function AddReadingScreen() {
     const [timestamp, setTimestamp] = useState(new Date());
-    const [location, setLocation] = useState({});
-    const [c, setContaminants] = useState(Array<any | null>);
-    const [sensorType, setSensorType] = useState('');
+    const [location, setLocation] = useState<Location | null>(null);
+    const [c, setContaminants] = useState<Array<any>>([]);
+    const [contaminant, setContaminant] = useState('');
     const [value, setValue] = useState('');
     const [useGPS, setUseGPS] = useState(false);
     const [notes, setNotes] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const router = useRouter();
-    const isFormComplete = sensorType && value;
+    const isFormComplete = contaminant && value;
     const { parameters, contaminants, from } = useLocalSearchParams();
 
     useEffect(() => {
         const raw = Array.isArray(parameters) ? parameters[0] : parameters;
-        if (typeof (contaminants) === "string") setContaminants(JSON.parse(contaminants));
+        if (typeof contaminants === "string") setContaminants(JSON.parse(contaminants));
         else setContaminants(c);
         try {
-
-
-            // load location from dashboard
             const parsed = JSON.parse(raw);
-
             setLocation(parsed);
-
         } catch (e) {
             setLocation({});
         }
     }, []);
+    const clearFields = () => {
+        setTimestamp(new Date());
+        setContaminant('');
+        setValue('');
+        setUseGPS(false);
+        setNotes('');
+    };
+
 
     const handleSave = async () => {
         if (!isFormComplete) return;
+
         const job = {
             timestamp: timestamp.toISOString(),
-            contaminantId: sensorType,
+            contaminant: contaminant,
             value: parseFloat(value),
             useGPS: useGPS,
             notes: notes.trim(),
-
+            location: location?.id,
+            status: STATUS.PENDING_SYNC
         };
-        await createJob(job);
-        console.log(await getJobs());
+
+
+        if (await createJob(job)) {
+            clearFields()
+        };
         Alert.alert('Saved locally');
     };
 
     return (
-
         <Box className="flex-1 bg-white px-6 pt-10">
-
             <HStack className="justify-between place-items-center">
                 <Text className="text-xl font-semibold mb-4">Add Reading</Text>
                 <Pressable onPress={() => {
@@ -88,12 +99,12 @@ export default function AddReadingScreen() {
             <VStack space="3xl">
                 {/* Timestamp */}
                 {Platform.OS === 'web' ? (
-                    <View className="">
+                    <View>
                         <Text className="text-sm text-gray-500 mb-1">Timestamp</Text>
                         <input
                             type="datetime-local"
                             className="border p-2 rounded w-full"
-                            value={timestamp.toISOString().slice(0, 16)}
+                            value={formatForDateTimeLocalInput(timestamp)}
                             onChange={(e) => {
                                 setTimestamp(new Date(e.target.value));
                             }}
@@ -120,7 +131,7 @@ export default function AddReadingScreen() {
                 )}
 
                 {/* Sensor Type */}
-                <Select onValueChange={(v) => setSensorType(v)}>
+                <Select onValueChange={(v) => setContaminant(v)}>
                     <Text className="text-sm text-gray-500 mb-1">Contaminant</Text>
                     <SelectTrigger className="border p-3 rounded bg-white">
                         <SelectInput placeholder="Select Sensor Type" className="text-base" />
@@ -131,7 +142,7 @@ export default function AddReadingScreen() {
                         <SelectContent>
                             {c?.length ? (
                                 c?.map(contaminant => (
-                                    <SelectItem key={contaminant?.id} label={contaminant?.name} value={contaminant?.id} />
+                                    <SelectItem key={contaminant?.id} label={contaminant?.name} value={contaminant?.name} />
                                 ))
                             ) : (
                                 <SelectItem label="No contaminants found" value="none" isDisabled />
@@ -144,7 +155,6 @@ export default function AddReadingScreen() {
                 <View>
                     <Text className="text-sm text-gray-500 mb-1">Value</Text>
                     <View className="flex-row items-center justify-between border p-3 rounded bg-white">
-
                         <Pressable onPress={() => setValue((prev) => (parseFloat(prev || '0') - 0.1).toFixed(2))}>
                             <MaterialIcons name="remove" size={24} />
                         </Pressable>
@@ -206,3 +216,4 @@ export default function AddReadingScreen() {
         </Box>
     );
 }
+

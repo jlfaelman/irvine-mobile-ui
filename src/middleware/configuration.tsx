@@ -14,3 +14,8 @@ export async function clearAllStorage() {
     console.error('Failed to clear AsyncStorage:', e);
   }
 };
+
+
+export async function getConfigURL(){
+  return await AsyncStorage.getItem('configuration_url');
+} 

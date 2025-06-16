@@ -16,6 +16,7 @@ import { Text } from '@/components/ui/text';
 import { DashboardInfo } from '@/src/interface/dashboard';
 import English from '@/src/language/english';
 import { loadDashboardInfo } from '@/src/middleware/dashboard';
+import { clearJob, syncJobs } from '@/src/middleware/job';
 import { checkToken, getRefreshToken, getToken } from '@/src/middleware/jwt';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -66,12 +67,21 @@ export default function DashboardScreen() {
         loadDashboard();
     }, []);
 
+    const syncJobsToDatabase = async () => {
+        const status = await syncJobs();
+        console.log(status)
+        if(!status){
+            console.log('No Jobs Found!')
+        }
+    }
     const syncDashboard = async () => {
 
         // check if user is online first
-        if(await loadDashboardInfo(true)){
-            console.log('dashboard reloaded');
-        }
+        // if(await loadDashboardInfo(true)){
+        //     console.log('dashboard reloaded');
+        // }
+
+        clearJob();
     }
 
 
@@ -86,9 +96,9 @@ export default function DashboardScreen() {
                 {/* Title + Sync */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <Text className="text-3xl font-semibold">Home</Text>
-                    <Pressable onPress={syncDashboard} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}>
+                    <Pressable onPress={syncJobsToDatabase} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}>
                         <MaterialIcons name="sync" size={28} color="#3b82f6" />
-                        <Text className="text-blue-600 font-medium" >Sync Locally</Text>
+                        <Text className="text-[#3b82f6] font-medium" >Sync Locally</Text>
                     </Pressable>
                 </View>
 
@@ -135,7 +145,7 @@ export default function DashboardScreen() {
                         <Pressable
                             onPress={() => {
                                 // validate the location is not empty
-                                if (label.route === '/reading' && selectedValue === "__GluestackPlaceholder__" || selectedValue === "") {
+                                if (label.route === '/reading' && selectedValue === "__GluestackPlaceholder__" || label.route === '/reading' &&  selectedValue === "") {
                                     showAlert("Invalid Location", "Please choose a valid location first");
                                 }
                                 else {

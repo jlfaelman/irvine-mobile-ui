@@ -1,4 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getConfigURL } from "./configuration";
+import { getRefreshToken, parseRefreshToken } from "./jwt";
 
 export async function createJob(newJob?: any) {
     try {
@@ -11,6 +13,7 @@ export async function createJob(newJob?: any) {
 
         AsyncStorage.setItem('jobs', JSON.stringify(jobs));
 
+        return true;
     } catch (error) {
         console.log(error);
 
@@ -28,7 +31,35 @@ export async function getJobs() {
 
 export async function clearJob() {
     await AsyncStorage.removeItem('jobs');
+    console.log('Jobs cleared')
 }
-export function syncJobs() {
+export async function syncJobs() {
+    try {
+        const API_URL = await getConfigURL();
+        const user = await parseRefreshToken()
+        const jobs = await getJobs();
+        if(!jobs || jobs.length <= 0) return false;
+        const body = JSON.stringify({
+            jobs: await getJobs(),
+            sync_at: new Date().toISOString(),
+            sync_by: user?.id,
+        })
+        const request = await fetch(API_URL + "/job/sync", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Berear ${getRefreshToken()}`,
+            },
+            body:body,
+        });
+        // console.log(body)
+        const jobsInfo = await request.json();
+        console.log(jobsInfo)
+
+        await clearJob()
+        return true
+    } catch (error) {
+        return error;
+    }
 
 }

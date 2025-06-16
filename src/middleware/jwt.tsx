@@ -23,6 +23,18 @@ export async function parseToken() {
     }
 };
 
+export async function parseRefreshToken() {
+    try {
+        const token = await getRefreshToken();
+        if(!token) throw "Invalid empty token.";
+        const decoded = jwtDecode<TokenPayload>(token);
+        return decoded;
+    } catch (error) {
+        console.error('Invalid token:', error);
+        return null;
+    }
+};
+
 export async function getRefreshToken() {
     const token =  await AsyncStorage.getItem('refreshToken');
     if(!token) return false;
