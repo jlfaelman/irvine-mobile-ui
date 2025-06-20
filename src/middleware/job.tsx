@@ -54,8 +54,6 @@ export async function syncJobs() {
         });
         // console.log(body)
         const jobsInfo = await request.json();
-        console.log(jobsInfo)
-
         await clearJob()
         return true
     } catch (error) {

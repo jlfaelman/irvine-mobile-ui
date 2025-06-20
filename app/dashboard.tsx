@@ -16,13 +16,13 @@ import { Text } from '@/components/ui/text';
 import { DashboardInfo } from '@/src/interface/dashboard';
 import English from '@/src/language/english';
 import { loadDashboardInfo } from '@/src/middleware/dashboard';
-import { clearJob, syncJobs } from '@/src/middleware/job';
+import { syncJobs } from '@/src/middleware/job';
 import { checkToken, getRefreshToken, getToken } from '@/src/middleware/jwt';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { SafeAreaView, ScrollView, useWindowDimensions, View } from 'react-native';
-import showAlert from './screens/alert';
+import useShowAlert from './screens/alert';
 import Header from './screens/header';
 import LoadingScreen from './screens/loading';
 
@@ -41,9 +41,10 @@ export default function DashboardScreen() {
     const { width } = useWindowDimensions();
     const [selectedValue, setSelectedValue] = useState('');
     const [dashboardInfo, setDashboardInfo] = useState<DashboardInfo | null>(null);
+    const [username, setUsername] = useState('');
     const iconSize = width >= 1024 ? 60 : width >= 768 ? 50 : 40;
     const router = useRouter();
-
+    const showAlert = useShowAlert();
     useEffect(() => {
         const authUser = async () => {
             const token = await getToken();
@@ -59,6 +60,7 @@ export default function DashboardScreen() {
 
             const dashboardData = await loadDashboardInfo();
             setDashboardInfo(dashboardData);
+            setUsername(dashboardData.firstName + " " + dashboardData.lastName )
             if (token) setIsLoading(false);
 
         };
@@ -69,9 +71,9 @@ export default function DashboardScreen() {
 
     const syncJobsToDatabase = async () => {
         const status = await syncJobs();
-        console.log(status)
         if(!status){
-            console.log('No Jobs Found!')
+            console.log('No Jobs Found!');
+            // add sync history
         }
     }
     const syncDashboard = async () => {
@@ -81,7 +83,6 @@ export default function DashboardScreen() {
         //     console.log('dashboard reloaded');
         // }
 
-        clearJob();
     }
 
 
@@ -91,7 +92,7 @@ export default function DashboardScreen() {
     else return (
         <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
             <ScrollView contentContainerStyle={{ padding: 20 }}>
-                <Header />
+                <Header name={username} />
 
                 {/* Title + Sync */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>

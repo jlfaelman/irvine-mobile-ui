@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { Location } from '@/src/interface/dashboard';
+import { addHistory } from '@/src/middleware/history';
 import { createJob } from '@/src/middleware/job';
 import STATUS from '@/src/utils/status';
 import { formatForDateTimeLocalInput } from '@/src/utils/timestamp';
@@ -23,8 +24,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Platform, View } from 'react-native';
-
+import { Platform, View } from 'react-native';
+import { v4 as uuidv4 } from 'uuid';
+import useShowAlert from './screens/alert';
 
 
 export default function AddReadingScreen() {
@@ -39,7 +41,7 @@ export default function AddReadingScreen() {
     const router = useRouter();
     const isFormComplete = contaminant && value;
     const { parameters, contaminants, from } = useLocalSearchParams();
-
+    const showAlert = useShowAlert();
     useEffect(() => {
         const raw = Array.isArray(parameters) ? parameters[0] : parameters;
         if (typeof contaminants === "string") setContaminants(JSON.parse(contaminants));
@@ -64,6 +66,7 @@ export default function AddReadingScreen() {
         if (!isFormComplete) return;
 
         const job = {
+            id: uuidv4(),
             timestamp: timestamp.toISOString(),
             contaminant: contaminant,
             value: parseFloat(value),
@@ -75,9 +78,10 @@ export default function AddReadingScreen() {
 
 
         if (await createJob(job)) {
-            clearFields()
+            await addHistory(job);
+            clearFields();
         };
-        Alert.alert('Saved locally');
+        showAlert('Success','Saved to queue','success');
     };
 
     return (
