@@ -11,7 +11,7 @@ import language from '@/src/utils/language';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import authenticateUser from '../src/middleware/auth';
-import showAlert from './screens/alert';
+import useShowAlert from './screens/alert';
 
 const brand = require("../assets/images/ias_logo_black.png");
 
@@ -21,6 +21,7 @@ export default function LoginScreen() {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const showAlert = useShowAlert();
 
     useEffect(() => {
         const authUser = async () => {

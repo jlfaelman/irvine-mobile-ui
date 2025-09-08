@@ -10,7 +10,6 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { checkConnectionConfiguration } from '../src/middleware/configuration';
-import { getDBConfig } from '../src/utils/configuration';
 import showAlert from './screens/alert';
 import LoadingScreen from './screens/loading';
 const brand = require("../assets/images/ias_logo_black.png");
@@ -20,7 +19,7 @@ const brand = require("../assets/images/ias_logo_black.png");
 export default function ConnectionStringScreen() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-    const [connectionString, setConnectionString] = useState('');
+    const [apiUrl, setApiUrl] = useState('');
     useEffect(() => {
         const runInit = async () => {
 
@@ -32,18 +31,19 @@ export default function ConnectionStringScreen() {
         runInit();
     }, [])
     const submitConnectionString = async () => {
-        const config = getDBConfig(connectionString);
-        if (!config) {
-            showAlert('Invalid Connection String', 'The connection string you entered is not recognized.');
-            return;
-
+        try {
+            const url = (apiUrl || '').trim();
+            if (!url || !/^https?:\/\//i.test(url)) {
+                showAlert('Invalid API URL', 'Please enter a valid http(s) URL.');
+                return;
+            }
+            await AsyncStorage.setItem('configuration_url', url);
+            console.log("API URL saved. Setting configuration.");
+            if (Platform.OS === "web") window.location.reload();
+            else router.replace('/');
+        } catch (e) {
+            showAlert('Error', 'Failed to save configuration.');
         }
-        AsyncStorage.setItem('configuration_url', config.URL);
-        AsyncStorage.setItem('configuration_secret', config.SECRET_KEY);
-        console.log("Connection String valid. Setting configuration.");
-
-        if (Platform.OS === "web") window.location.reload();
-        else router.replace('/');
     };
 
     if (loading) return <LoadingScreen />;
@@ -59,12 +59,12 @@ export default function ConnectionStringScreen() {
                 />
 
                 <FormControl>
-                    <Text className="text-base font-semibold">Connection String</Text>
+                    <Text className="text-base font-semibold">API URL</Text>
                     <Input variant="outline" className="w-full">
                         <InputField
-                            placeholder="Ex: sample-connection-string"
-                            value={connectionString}
-                            onChangeText={setConnectionString}
+                            placeholder="Ex: https://my-api.example.com/api"
+                            value={apiUrl}
+                            onChangeText={setApiUrl}
                         />
                     </Input>
                 </FormControl>

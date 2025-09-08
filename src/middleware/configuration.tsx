@@ -2,8 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export async function checkConnectionConfiguration() {
     const config_url = await AsyncStorage.getItem('configuration_url')
-    const config_secret =  await AsyncStorage.getItem('configuration_secret')
-    return Boolean(config_url && config_secret);
+    return Boolean(config_url);
 } 
 
 export async function clearAllStorage() {
@@ -17,5 +16,9 @@ export async function clearAllStorage() {
 
 
 export async function getConfigURL(){
-  return await AsyncStorage.getItem('configuration_url');
+  const url = await AsyncStorage.getItem('configuration_url');
+  if (url) return url;
+  // Fallback to env if no stored URL
+  // Note: Only EXPO_PUBLIC_* are exposed to client
+  return process.env.EXPO_PUBLIC_API_URL ?? null;
 } 

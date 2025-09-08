@@ -6,7 +6,6 @@ import {
     SelectContent,
     SelectDragIndicator,
     SelectDragIndicatorWrapper,
-    SelectIcon,
     SelectInput,
     SelectItem,
     SelectPortal,
@@ -128,12 +127,7 @@ export default function DashboardScreen() {
                                 placeholder="Select Location"
                                 className="text-base font-semibold"
                             />
-                            <SelectIcon
-                                as={MaterialIcons}
-                                name="keyboard-arrow-down"
-                                size="md"
-                                color="$textDark800"
-                            />
+                            <MaterialIcons name="keyboard-arrow-down" size={18} color="#1f2937" />
                         </SelectTrigger>
 
                         <SelectPortal>
@@ -145,7 +139,7 @@ export default function DashboardScreen() {
 
                                 {dashboardInfo?.locations?.length ? (
                                     dashboardInfo.locations.map(loc => (
-                                        <SelectItem key={loc.id} label={loc.name} value={JSON.stringify(loc)} />
+                                        <SelectItem key={loc.id} label={loc.name} value={loc.name} />
                                     ))
                                 ) : (
                                     <SelectItem label="No locations found" value="none" isDisabled />
@@ -164,10 +158,11 @@ export default function DashboardScreen() {
                                     showAlert("Invalid Location", "Please choose a valid location first");
                                 }
                                 else {
+                                    const selectedLocation = dashboardInfo?.locations.find((loc) => loc.name === selectedValue);
                                     router.push({
                                         pathname: label.route,
                                         params: {
-                                            parameters: selectedValue,
+                                            parameters: JSON.stringify(selectedLocation ?? {}),
                                             contaminants: JSON.stringify(dashboardInfo?.contaminants),
                                             from: "dashboard"
                                         }
@@ -185,7 +180,7 @@ export default function DashboardScreen() {
                                 shadowRadius: 3,
                             }}
                         >
-                            <MaterialIcons name={label.icon || 'help'} size={iconSize} color="#3b82f6" />
+                            <MaterialIcons name={(label.icon as any) || ('help-outline' as any)} size={iconSize} color="#3b82f6" />
                             <Text className="text-lg mt-2 text-center">{label.name}</Text>
                         </Pressable>
                     ))}
