@@ -54,12 +54,14 @@ export  async function checkToken(){
 }
 
 export  function saveToken(token: string) {
-    AsyncStorage.setItem('token', `Bearer ${token}`);
+    // Store raw token without prefix
+    AsyncStorage.setItem('token', token);
     console.log('Token stored successfully')
     return true;
 }
 export  function saveRefreshToken(token: string) {
-    AsyncStorage.setItem('refreshToken', `Bearer ${token}`);
-    console.log('Token stored successfully')
+    // Store raw token without prefix
+    AsyncStorage.setItem('refreshToken', token);
+    console.log('Refresh token stored successfully')
     return true;
 }

@@ -30,7 +30,7 @@ export default function ConnectionStringScreen() {
             } else setLoading(false);
         }
         runInit();
-    })
+    }, [])
     const submitConnectionString = async () => {
         const config = getDBConfig(connectionString);
         if (!config) {

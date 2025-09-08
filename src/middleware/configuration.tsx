@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export async function checkConnectionConfiguration() {
     const config_url = await AsyncStorage.getItem('configuration_url')
     const config_secret =  await AsyncStorage.getItem('configuration_secret')
-    return !config_url && !config_secret ? false : true;
+    return Boolean(config_url && config_secret);
 } 
 
 export async function clearAllStorage() {

@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getConfigURL } from "./configuration";
 import { parseToken, saveRefreshToken, saveToken } from "./jwt";
 
 export async function saveUserInformation() {
@@ -26,7 +27,8 @@ export async function getUserInformation(key: string) {
 
 export default async function authenticateUser(email: string, password: string) {
     try {
-        const API_URL = process.env.EXPO_PUBLIC_API_URL;
+        const API_URL = await getConfigURL();
+        if(!API_URL) throw new Error('Missing configuration_url');
         const isAuthenticated = await fetch(API_URL + "/auth", {
             method: 'POST',
             headers: {

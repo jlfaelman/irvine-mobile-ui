@@ -16,6 +16,7 @@ import { Text } from '@/components/ui/text';
 import { DashboardInfo } from '@/src/interface/dashboard';
 import English from '@/src/language/english';
 import { loadDashboardInfo } from '@/src/middleware/dashboard';
+import { syncHistory } from '@/src/middleware/history';
 import { syncJobs } from '@/src/middleware/job';
 import { checkToken, getRefreshToken, getToken } from '@/src/middleware/jwt';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -37,6 +38,7 @@ const items = [
 
 export default function DashboardScreen() {
     const [isLoading, setIsLoading] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [isUserAuth, setIsUserAuth] = useState(true);
     const { width } = useWindowDimensions();
     const [selectedValue, setSelectedValue] = useState('');
@@ -60,7 +62,7 @@ export default function DashboardScreen() {
 
             const dashboardData = await loadDashboardInfo();
             setDashboardInfo(dashboardData);
-            setUsername(dashboardData.firstName + " " + dashboardData.lastName )
+            setUsername(dashboardData.firstName + " " + dashboardData.lastName)
             if (token) setIsLoading(false);
 
         };
@@ -69,13 +71,23 @@ export default function DashboardScreen() {
         loadDashboard();
     }, []);
 
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
     const syncJobsToDatabase = async () => {
+        setIsSyncing(true);
+
         const status = await syncJobs();
-        if(!status){
-            console.log('No Jobs Found!');
-            // add sync history
+        if (!status) console.log('No Jobs Found!');
+
+        const syncStatus = await syncHistory();
+
+        if (syncStatus) {
+            await sleep(2000); 
+            setIsSyncing(false);
+
+            showAlert('Sync Completed', "Data saved to database successfully.",'success');
         }
-    }
+    };
     const syncDashboard = async () => {
 
         // check if user is online first
@@ -88,7 +100,9 @@ export default function DashboardScreen() {
 
 
 
+
     if (isLoading) return <LoadingScreen message='Logged In successfully. Loading Dashboard for you.' />
+    if (isSyncing) return <LoadingScreen message='Data Syncing to Database.' />
     else return (
         <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
             <ScrollView contentContainerStyle={{ padding: 20 }}>
@@ -146,7 +160,7 @@ export default function DashboardScreen() {
                         <Pressable
                             onPress={() => {
                                 // validate the location is not empty
-                                if (label.route === '/reading' && selectedValue === "__GluestackPlaceholder__" || label.route === '/reading' &&  selectedValue === "") {
+                                if (label.route === '/reading' && selectedValue === "__GluestackPlaceholder__" || label.route === '/reading' && selectedValue === "") {
                                     showAlert("Invalid Location", "Please choose a valid location first");
                                 }
                                 else {
@@ -154,7 +168,7 @@ export default function DashboardScreen() {
                                         pathname: label.route,
                                         params: {
                                             parameters: selectedValue,
-                                            contaminants:JSON.stringify(dashboardInfo?.contaminants),
+                                            contaminants: JSON.stringify(dashboardInfo?.contaminants),
                                             from: "dashboard"
                                         }
                                     })

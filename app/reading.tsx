@@ -78,7 +78,7 @@ export default function AddReadingScreen() {
 
 
         if (await createJob(job)) {
-            await addHistory(job);
+            await addHistory(job, true);
             clearFields();
         };
         showAlert('Success','Saved to queue','success');

@@ -1,16 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DashboardInfo } from "../interface/dashboard";
 import { getUserInformation } from "./auth";
+import { getConfigURL } from "./configuration";
 import { getToken } from "./jwt";
 
 export async function fetchDashboard() {
     try {
-        const API_URL = process.env.EXPO_PUBLIC_API_URL;  // to be changed to use utils/configuration for handling environment variables
+        const API_URL = await getConfigURL();
+        if(!API_URL) throw new Error('Missing configuration_url');
+        const token = await getToken();
         const request = await fetch(API_URL + "/dashboard", {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Berear ${getToken()}`,
+                'Authorization': `Bearer ${token}`,
             },
         });
 

@@ -12,9 +12,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList } from 'react-native';
 const statusBadge:any = {
-    pending: { label: '⏳ Pending', color: '#facc15' },
-    synced: { label: '✅ Synced', color: '#22c55e' },
-    error: { label: '⚠️ Error', color: '#ef4444' },
+    pending: { label: 'Pending', color: '#facc15' },
+    completed: { label: 'Completed', color: '#22c55e' },
+    error: { label: 'Error', color: '#ef4444' },
 };
 
 export default function HistoryScreen() {
@@ -78,7 +78,7 @@ export default function HistoryScreen() {
             </HStack>
 
             <Tabs
-                tabs={['all', 'pending', 'synced', 'error']}
+                tabs={['all', 'pending', 'completed', 'error']}
                 selected={selectedTab}
                 onChange={setSelectedTab}
             />
