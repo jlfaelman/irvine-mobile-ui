@@ -65,3 +65,13 @@ export  function saveRefreshToken(token: string) {
     console.log('Refresh token stored successfully')
     return true;
 }
+
+export async function clearTokens() {
+    try {
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('refreshToken');
+        return true;
+    } catch (e) {
+        return false;
+    }
+}

@@ -11,6 +11,7 @@ import language from '@/src/utils/language';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import authenticateUser from '../src/middleware/auth';
+import { clearConfigURL } from '../src/middleware/configuration';
 import useShowAlert from './screens/alert';
 
 const brand = require("../assets/images/ias_logo_black.png");
@@ -48,6 +49,11 @@ export default function LoginScreen() {
         }
 
     }
+
+    const onClearConnection = async () => {
+        await clearConfigURL();
+        router.replace('/');
+    };
 
     return (
         <Center className="flex-1 bg-white">
@@ -94,10 +100,13 @@ export default function LoginScreen() {
                         </CheckboxIndicator>
                         <CheckboxLabel className="ml-2 text-sm">Remember Me?</CheckboxLabel>
                     </Checkbox> */}
-
                     <Pressable>
                         <Text className="text-sm text-blue-600 font-medium">{language.english.auth.button.forgot_password}</Text>
                     </Pressable>
+                    <Pressable onPress={onClearConnection}>
+                        <Text className="text-sm text-red-600 font-medium">Clear Connection</Text>
+                    </Pressable>
+
                 </HStack>
             </VStack>
         </Center>

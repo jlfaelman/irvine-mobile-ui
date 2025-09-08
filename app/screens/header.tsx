@@ -1,7 +1,7 @@
 import { Pressable } from "@/components/ui/pressable";
 import { Text } from '@/components/ui/text';
 import { View } from "@/components/ui/view";
-import { clearAllStorage } from '@/src/middleware/configuration';
+import { clearTokens } from '@/src/middleware/jwt';
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 
@@ -12,8 +12,8 @@ export default function Header({ name }: HeaderProps) {
     const router = useRouter();
 
     const onLogout = async () => {
-        await clearAllStorage();
-        router.replace('/');
+        await clearTokens();
+        router.replace('/auth');
     };
     return (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, alignItems: 'center' }}>

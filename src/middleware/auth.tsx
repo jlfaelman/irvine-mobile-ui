@@ -52,6 +52,6 @@ export default async function authenticateUser(email: string, password: string) 
             else return true;
         }
     } catch (error) {
-        return error
+        return false;
     }
 }

@@ -1,10 +1,11 @@
 // @/components/ui/show-alert.ts
 import { HStack } from '@/components/ui/hstack';
+import { Pressable } from '@/components/ui/pressable';
 import {
-    Toast,
-    ToastDescription,
-    ToastTitle,
-    useToast,
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
 } from '@/components/ui/toast';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -29,9 +30,14 @@ export default function useShowAlert() {
         render: ({ id }) => (
           <Toast nativeID={id} action={status} variant="outline">
             <ToastTitle>
-              <HStack space="sm" alignItems="center">
-                <MaterialIcons name={icon.name} size={18} color={icon.color} />
-                {title}
+              <HStack space="sm" className="items-center justify-between w-full">
+                <HStack space="sm" className="items-center">
+                  <MaterialIcons name={icon.name as any} size={18} color={icon.color} />
+                  {title}
+                </HStack>
+                <Pressable onPress={() => toast.close(id)}>
+                  <MaterialIcons name="close" size={16} color="#6b7280" />
+                </Pressable>
               </HStack>
             </ToastTitle>
             {message && <ToastDescription>{message}</ToastDescription>}

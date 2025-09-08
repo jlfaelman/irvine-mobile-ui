@@ -22,3 +22,14 @@ export async function getConfigURL(){
   // Note: Only EXPO_PUBLIC_* are exposed to client
   return process.env.EXPO_PUBLIC_API_URL ?? null;
 } 
+
+export async function clearConfigURL(){
+  try {
+    await AsyncStorage.removeItem('configuration_url');
+    console.log('Configuration URL cleared.');
+    return true;
+  } catch (e) {
+    console.error('Failed to clear configuration URL:', e);
+    return false;
+  }
+}
