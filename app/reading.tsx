@@ -6,11 +6,10 @@ import {
     Select,
     SelectBackdrop,
     SelectContent,
-    SelectIcon,
     SelectInput,
     SelectItem,
     SelectPortal,
-    SelectTrigger,
+    SelectTrigger
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
@@ -24,7 +23,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, ScrollView } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
 import useShowAlert from './screens/alert';
 
@@ -50,7 +49,7 @@ export default function AddReadingScreen() {
             const parsed = JSON.parse(raw);
             setLocation(parsed);
         } catch (e) {
-            setLocation({});
+            setLocation(null);
         }
     }, []);
     const clearFields = () => {
@@ -84,139 +83,261 @@ export default function AddReadingScreen() {
         showAlert('Success','Saved to queue','success');
     };
 
+    const FormSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+        <Box className="mb-6">
+            <Text className="text-lg font-semibold text-gray-900 mb-3">{title}</Text>
+            {children}
+        </Box>
+    );
+
+    const FormField = ({ label, children }: { label: string; children: React.ReactNode }) => (
+        <VStack className="mb-4">
+            <Text className="text-sm font-medium text-gray-700 mb-2">{label}</Text>
+            {children}
+        </VStack>
+    );
+
     return (
-        <Box className="flex-1 bg-white px-6 pt-10">
-            <HStack className="justify-between place-items-center">
-                <Text className="text-xl font-semibold mb-4">Add Reading</Text>
-                <Pressable onPress={() => {
-                    if (router.canGoBack?.()) {
-                        router.back();
-                    } else {
-                        router.push('/dashboard');
-                    }
-                }} className="flex-row items-center gap-2">
-                    <MaterialIcons name="chevron-left" size={20} color="#3b82f6" />
-                    <Text className="text-blue-600">Back</Text>
-                </Pressable>
-            </HStack>
+        <Box className="flex-1 bg-gray-100">
+            {/* Header */}
+            <Box className="bg-white px-6 pt-12 pb-4">
+                <HStack className="justify-between items-center">
+                    <Text className="text-2xl font-bold text-gray-900">Add Reading</Text>
+                    <Pressable 
+                        onPress={() => {
+                            if (router.canGoBack?.()) {
+                                router.back();
+                            } else {
+                                router.push('/dashboard');
+                            }
+                        }}
+                        className="w-8 h-8 items-center justify-center"
+                    >
+                        <MaterialIcons name="close" size={24} color="#6b7280" />
+                    </Pressable>
+                </HStack>
+            </Box>
 
-            <VStack space="3xl">
-                {/* Timestamp */}
-                {Platform.OS === 'web' ? (
-                    <View>
-                        <Text className="text-sm text-gray-500 mb-1">Timestamp</Text>
-                        <input
-                            type="datetime-local"
-                            className="border p-2 rounded w-full"
-                            value={formatForDateTimeLocalInput(timestamp)}
-                            onChange={(e) => {
-                                setTimestamp(new Date(e.target.value));
-                            }}
-                        />
-                    </View>
-                ) : (
-                    <>
-                        <Pressable onPress={() => setShowDatePicker(true)} className="border p-3 rounded bg-gray-50">
-                            <Text className="text-sm text-gray-500">Timestamp</Text>
-                            <Text className="text-base">{timestamp.toLocaleString()}</Text>
-                        </Pressable>
-                        {showDatePicker && (
-                            <DateTimePicker
-                                value={timestamp}
-                                mode="datetime"
-                                display="default"
-                                onChange={(event, selectedDate) => {
-                                    setShowDatePicker(false);
-                                    if (selectedDate) setTimestamp(selectedDate);
-                                }}
-                            />
-                        )}
-                    </>
-                )}
-
-                {/* Sensor Type */}
-                <Select onValueChange={(v) => setContaminant(v)}>
-                    <Text className="text-sm text-gray-500 mb-1">Contaminant</Text>
-                    <SelectTrigger className="border p-3 rounded bg-white">
-                        <SelectInput placeholder="Select Sensor Type" className="text-base" />
-                        <SelectIcon as={MaterialIcons} name="keyboard-arrow-down" />
-                    </SelectTrigger>
-                    <SelectPortal>
-                        <SelectBackdrop />
-                        <SelectContent>
-                            {c?.length ? (
-                                c?.map(contaminant => (
-                                    <SelectItem key={contaminant?.id} label={contaminant?.name} value={contaminant?.name} />
-                                ))
+            <Box className="flex-1 px-6 pt-6">
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    {/* Basic Information */}
+                    <FormSection title="Basic Information">
+                        <FormField label="Timestamp">
+                            {Platform.OS === 'web' ? (
+                                <input
+                                    type="datetime-local"
+                                    className="border border-gray-300 p-3 rounded-lg w-full bg-white"
+                                    value={formatForDateTimeLocalInput(timestamp)}
+                                    onChange={(e) => setTimestamp(new Date(e.target.value))}
+                                />
                             ) : (
-                                <SelectItem label="No contaminants found" value="none" isDisabled />
+                                <>
+                                    <Pressable 
+                                        onPress={() => setShowDatePicker(true)} 
+                                        className="border border-gray-300 p-4 rounded-lg bg-white"
+                                        style={{
+                                            shadowColor: '#000',
+                                            shadowOffset: { width: 0, height: 1 },
+                                            shadowOpacity: 0.1,
+                                            shadowRadius: 2,
+                                            elevation: 2,
+                                        }}
+                                    >
+                                        <HStack className="items-center justify-between">
+                                            <VStack>
+                                                <Text className="text-sm text-gray-500">Selected Time</Text>
+                                                <Text className="text-base font-medium text-gray-900">
+                                                    {timestamp.toLocaleDateString()} at {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </Text>
+                                            </VStack>
+                                            <MaterialIcons name="schedule" size={20} color="#6b7280" />
+                                        </HStack>
+                                    </Pressable>
+                                    {showDatePicker && (
+                                        <DateTimePicker
+                                            value={timestamp}
+                                            mode="datetime"
+                                            display="default"
+                                            onChange={(event, selectedDate) => {
+                                                setShowDatePicker(false);
+                                                if (selectedDate) setTimestamp(selectedDate);
+                                            }}
+                                        />
+                                    )}
+                                </>
                             )}
-                        </SelectContent>
-                    </SelectPortal>
-                </Select>
+                        </FormField>
 
-                {/* Value Input */}
-                <View>
-                    <Text className="text-sm text-gray-500 mb-1">Value</Text>
-                    <View className="flex-row items-center justify-between border p-3 rounded bg-white">
-                        <Pressable onPress={() => setValue((prev) => (parseFloat(prev || '0') - 0.1).toFixed(2))}>
-                            <MaterialIcons name="remove" size={24} />
-                        </Pressable>
-                        <Input className="w-24 text-center border-0">
-                            <InputField
-                                keyboardType="numeric"
-                                value={value}
-                                onChangeText={setValue}
-                                placeholder="0.00"
+                        <FormField label="Contaminant Type">
+                            <Select onValueChange={(v) => setContaminant(v)}>
+                                <SelectTrigger 
+                                    className="border border-gray-300 p-4 rounded-lg bg-white"
+                                    style={{
+                                        shadowColor: '#000',
+                                        shadowOffset: { width: 0, height: 1 },
+                                        shadowOpacity: 0.1,
+                                        shadowRadius: 2,
+                                        elevation: 2,
+                                    }}
+                                >
+                                    <SelectInput 
+                                        placeholder="Select contaminant type" 
+                                        className="text-base" 
+                                    />
+                                    <MaterialIcons name="keyboard-arrow-down" size={20} color="#6b7280" />
+                                </SelectTrigger>
+                                <SelectPortal>
+                                    <SelectBackdrop />
+                                    <SelectContent>
+                                        {c?.length ? (
+                                            c?.map(contaminant => (
+                                                <SelectItem 
+                                                    key={contaminant?.id} 
+                                                    label={contaminant?.name} 
+                                                    value={contaminant?.name} 
+                                                />
+                                            ))
+                                        ) : (
+                                            <SelectItem label="No contaminants found" value="none" isDisabled />
+                                        )}
+                                    </SelectContent>
+                                </SelectPortal>
+                            </Select>
+                        </FormField>
+                    </FormSection>
+
+                    {/* Reading Details */}
+                    <FormSection title="Reading Details">
+                        <FormField label="Value">
+                            <Box 
+                                className="flex-row items-center justify-between border border-gray-300 p-4 rounded-lg bg-white"
+                                style={{
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 2,
+                                    elevation: 2,
+                                }}
+                            >
+                                <Pressable 
+                                    onPress={() => setValue((prev) => (parseFloat(prev || '0') - 0.1).toFixed(2))}
+                                    className="w-10 h-10 rounded-full items-center justify-center"
+                                    style={{ backgroundColor: '#f3f4f6' }}
+                                >
+                                    <MaterialIcons name="remove" size={20} color="#6b7280" />
+                                </Pressable>
+                                <Input className="w-32 text-center border-0">
+                                    <InputField
+                                        keyboardType="numeric"
+                                        value={value}
+                                        onChangeText={setValue}
+                                        placeholder="0.00"
+                                        className="text-center text-lg font-semibold"
+                                    />
+                                </Input>
+                                <Pressable 
+                                    onPress={() => setValue((prev) => (parseFloat(prev || '0') + 0.1).toFixed(2))}
+                                    className="w-10 h-10 rounded-full items-center justify-center"
+                                    style={{ backgroundColor: '#f3f4f6' }}
+                                >
+                                    <MaterialIcons name="add" size={20} color="#6b7280" />
+                                </Pressable>
+                            </Box>
+                        </FormField>
+
+                        <FormField label="GPS Location">
+                            <Box 
+                                className="flex-row items-center justify-between p-4 rounded-lg bg-white"
+                                style={{
+                                    backgroundColor: useGPS ? '#f0f9ff' : '#f8fafc',
+                                    borderWidth: 1,
+                                    borderColor: useGPS ? '#3b82f6' : '#e5e7eb',
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 2,
+                                    elevation: 2,
+                                }}
+                            >
+                                <HStack className="items-center">
+                                    <Box 
+                                        className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                                        style={{ backgroundColor: useGPS ? '#3b82f6' : '#6b7280' }}
+                                    >
+                                        <MaterialIcons name="gps-fixed" size={20} color="white" />
+                                    </Box>
+                                    <VStack>
+                                        <Text className="text-base font-medium text-gray-900">Use GPS</Text>
+                                        <Text className="text-sm text-gray-500">
+                                            {useGPS ? 'Location tracking enabled' : 'Location tracking disabled'}
+                                        </Text>
+                                    </VStack>
+                                </HStack>
+                                <Switch 
+                                    isChecked={useGPS} 
+                                    onToggle={() => setUseGPS(!useGPS)} 
+                                />
+                            </Box>
+                        </FormField>
+                    </FormSection>
+
+                    {/* Additional Information */}
+                    <FormSection title="Additional Information">
+                        <FormField label="Notes (Optional)">
+                            <Input 
+                                className="h-24 border border-gray-300 rounded-lg bg-white"
+                                style={{
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 2,
+                                    elevation: 2,
+                                }}
+                            >
+                                <InputField
+                                    multiline
+                                    numberOfLines={4}
+                                    placeholder="Add any comments or observations (e.g. cloudy sample, need filter cleaning)"
+                                    value={notes}
+                                    onChangeText={setNotes}
+                                    className="p-4"
+                                />
+                            </Input>
+                        </FormField>
+                    </FormSection>
+
+                    {/* Save Button */}
+                    <Pressable
+                        onPress={handleSave}
+                        disabled={!isFormComplete}
+                        className={`py-4 rounded-lg items-center mb-8 ${
+                            isFormComplete 
+                                ? 'bg-blue-600' 
+                                : 'bg-gray-300'
+                        }`}
+                        style={{
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: isFormComplete ? 0.2 : 0.1,
+                            shadowRadius: 4,
+                            elevation: isFormComplete ? 4 : 2,
+                        }}
+                    >
+                        <HStack className="items-center">
+                            <MaterialIcons 
+                                name="save" 
+                                size={20} 
+                                color={isFormComplete ? "white" : "#9ca3af"} 
                             />
-                        </Input>
-                        <Pressable onPress={() => setValue((prev) => (parseFloat(prev || '0') + 0.1).toFixed(2))}>
-                            <MaterialIcons name="add" size={24} />
-                        </Pressable>
-                    </View>
-                </View>
-
-                {/* GPS Toggle */}
-                {Platform.OS === 'web' ? (
-                    <View className="flex-row items-center justify-between">
-                        <Text className="text-base">Use GPS</Text>
-                        <input
-                            type="checkbox"
-                            checked={useGPS}
-                            onChange={(e) => setUseGPS(e.target.checked)}
-                            className="w-5 h-5 accent-blue-600 rounded cursor-pointer"
-                        />
-                    </View>
-                ) : (
-                    <View className="flex-row items-center justify-between">
-                        <Text className="text-base">Use GPS</Text>
-                        <Switch isChecked={useGPS} onToggle={() => setUseGPS(!useGPS)} />
-                    </View>
-                )}
-
-                {/* Notes */}
-                <View>
-                    <Text className="text-sm text-gray-500 mb-1">Notes</Text>
-                    <Input className="h-24">
-                        <InputField
-                            multiline
-                            numberOfLines={4}
-                            placeholder="Comments (e.g. cloudy sample, need filter cleaning)"
-                            value={notes}
-                            onChangeText={setNotes}
-                        />
-                    </Input>
-                </View>
-            </VStack>
-
-            {/* Save Button */}
-            <Pressable
-                onPress={handleSave}
-                disabled={!isFormComplete}
-                className={`mt-8 py-4 rounded-md items-center ${isFormComplete ? 'bg-blue-600' : 'bg-gray-300'}`}
-            >
-                <Text className="text-white font-semibold">Save Locally</Text>
-            </Pressable>
+                            <Text className={`ml-2 font-semibold ${
+                                isFormComplete ? 'text-white' : 'text-gray-500'
+                            }`}>
+                                Save Reading
+                            </Text>
+                        </HStack>
+                    </Pressable>
+                </ScrollView>
+            </Box>
         </Box>
     );
 }

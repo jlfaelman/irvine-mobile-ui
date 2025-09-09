@@ -41,11 +41,11 @@ export default function LoginScreen() {
 
         const isAuthenticated = await authenticateUser(email, password)
         if (isAuthenticated) {
-            showAlert(language.english.auth.alert.login_success.title, language.english.auth.alert.login_success.message);
-            router.push('/dashboard');
+            showAlert(language.english.auth.alert.login_success.title, language.english.auth.alert.login_success.message, 'success');
+            router.push({ pathname: '/dashboard', params: { sync: 'true' } });
         }
         else {
-            showAlert(language.english.auth.alert.login_failed.title, language.english.auth.alert.login_failed.message);
+            showAlert(language.english.auth.alert.login_failed.title, language.english.auth.alert.login_failed.message, 'error');
         }
 
     }
@@ -67,13 +67,26 @@ export default function LoginScreen() {
 
                 <FormControl>
                     <Input variant="outline" className="w-full self-center">
-                        <InputField value={email} onChangeText={setEmail} placeholder={language.english.auth.placeholder.email} />
+                        <InputField 
+                            value={email} 
+                            onChangeText={setEmail} 
+                            placeholder={language.english.auth.placeholder.email}
+                            accessibilityLabel="Email input"
+                            accessibilityHint="Enter your email address"
+                        />
                     </Input>
                 </FormControl>
 
                 <FormControl>
                     <Input variant="outline" className="w-full self-center">
-                        <InputField value={password} onChangeText={setPassword} placeholder={language.english.auth.placeholder.password} type="password" />
+                        <InputField 
+                            value={password} 
+                            onChangeText={setPassword} 
+                            placeholder={language.english.auth.placeholder.password} 
+                            type="password"
+                            accessibilityLabel="Password input"
+                            accessibilityHint="Enter your password"
+                        />
                     </Input>
                 </FormControl>
 
@@ -83,6 +96,8 @@ export default function LoginScreen() {
                 <Pressable
                     onPress={onAuthSubmit}
                     className="bg-blue-500 py-2 px-5 rounded-md items-center"
+                    accessibilityLabel="Login button"
+                    accessibilityHint="Tap to login with your credentials"
                 >
                     <Text className="text-white font-bold">{language.english.auth.button.submit}</Text>
                 </Pressable>

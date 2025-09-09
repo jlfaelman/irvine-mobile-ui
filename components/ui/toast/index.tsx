@@ -1,19 +1,19 @@
 'use client';
-import React from 'react';
-import { createToastHook } from '@gluestack-ui/toast';
-import { AccessibilityInfo, Text, View, ViewStyle } from 'react-native';
+import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
-import { cssInterop } from 'nativewind';
 import {
-  Motion,
+  useStyleContext,
+  withStyleContext,
+} from '@gluestack-ui/nativewind-utils/withStyleContext';
+import { createToastHook } from '@gluestack-ui/toast';
+import {
   AnimatePresence,
+  Motion,
   MotionComponentProps,
 } from '@legendapp/motion';
-import {
-  withStyleContext,
-  useStyleContext,
-} from '@gluestack-ui/nativewind-utils/withStyleContext';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+import { cssInterop } from 'nativewind';
+import React from 'react';
+import { AccessibilityInfo, Text, View, ViewStyle } from 'react-native';
 
 type IMotionViewProps = React.ComponentProps<typeof View> &
   MotionComponentProps<typeof View, ViewStyle, unknown, unknown, unknown>;
@@ -185,7 +185,20 @@ const ToastTitle = React.forwardRef<
   React.useEffect(() => {
     // Issue from react-native side
     // Hack for now, will fix this later
-    AccessibilityInfo.announceForAccessibility(children as string);
+    try {
+      let announcement = 'Toast notification';
+      if (typeof children === 'string') {
+        announcement = children;
+      } else if (React.isValidElement(children)) {
+        const props = children.props as any;
+        if (props?.children && typeof props.children === 'string') {
+          announcement = props.children;
+        }
+      }
+      AccessibilityInfo.announceForAccessibility(announcement);
+    } catch (error) {
+      console.log('Accessibility announcement error:', error);
+    }
   }, [children]);
 
   return (
@@ -237,4 +250,5 @@ Toast.displayName = 'Toast';
 ToastTitle.displayName = 'ToastTitle';
 ToastDescription.displayName = 'ToastDescription';
 
-export { useToast, Toast, ToastTitle, ToastDescription };
+export { Toast, ToastDescription, ToastTitle, useToast };
+

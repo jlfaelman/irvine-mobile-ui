@@ -8,6 +8,7 @@ import {
     History
 } from '@/src/interface/history';
 import { clearHistory, getHistory } from '@/src/middleware/history';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList } from 'react-native';
@@ -59,89 +60,147 @@ export default function HistoryScreen() {
             ? historyList
             : historyList.filter((item: History) => item?.status === selectedTab);
 
-    return (
-        <Box className="flex-1 bg-white px-4 pt-10">
-            <HStack className="justify-between place-items-center">
-                <Text className="text-xl font-semibold mb-4">History</Text>
-                <Pressable
-                    onPress={() => {
-                        if (router.canGoBack?.()) {
-                            router.back();
-                        } else {
-                            router.push('/dashboard');
-                        }
-                        // clearHistory();
-                    }}
-                >
-                    <Text className="text-blue-600">Back</Text>
-                </Pressable>
-            </HStack>
+    const HistoryCard = ({ item }: { item: History }) => {
+        const { data, status, created_at, finished_at }: any = item;
+        const badge = statusBadge[status] || { label: status, color: '#9ca3af' };
 
-            <Tabs
-                tabs={['all', 'pending', 'completed', 'error']}
-                selected={selectedTab}
-                onChange={setSelectedTab}
-            />
-
-            <FlatList
-                data={filteredData}
-                keyExtractor={(item: History) => item.created_at} // or combine with ref_user if needed
-                onRefresh={fetchHistory}
-                refreshing={refreshing}
-                contentContainerStyle={{ paddingBottom: 16 }}
-                renderItem={({ item }) => {
-                    const { data, status, created_at, finished_at }:any = item;
-
-
-                    return (
-                        <Box className="border-b border-gray-200 py-4">
-                            <HStack className="justify-between items-center">
-                                <VStack>
-                                    <HStack className='gap-1 items-center'>
-                                        <Text className="text-base font-semibold">
-                                            {data?.contaminant} -
-                                        </Text>
-                                        <Text className="text-base font-semibold">
-                                            {data?.value}
-                                        </Text>
-                                        <Text className="text-xs ">
-                                            {getUnitByName(data?.contaminant)}
-                                        </Text>
-                                    </HStack>
-
-                                    <Text className="text-sm text-gray-500">
-                                        Created: {new Date(created_at).toLocaleString()}
-                                    </Text>
-                                    {finished_at && (
-                                        <Text className="text-sm text-gray-400">
-                                            Finished: {new Date(finished_at).toLocaleString()}
-                                        </Text>
-                                    )}
-                                    {/* {typedData.source && (
-                                        <Text className="text-sm text-gray-400">
-                                            Source: {typedData.source}
-                                        </Text>
-                                    )} */}
-                                </VStack>
-                                <Box
-                                    className="px-2 py-1 rounded-full"
-                                    style={{ backgroundColor: statusBadge[status]?.color ?? '#9ca3af' }} // fallback gray
-                                >
-                                    <Text className="text-xs text-white">
-                                        {statusBadge[status]?.label ?? status}
-                                    </Text>
-                                </Box>
-                            </HStack>
-                        </Box>
-                    );
+        return (
+            <Box 
+                className="p-4 rounded-lg mb-3"
+                style={{
+                    backgroundColor: '#ffffff',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 3,
                 }}
-            />
+            >
+                <HStack className="justify-between items-start">
+                    <VStack className="flex-1">
+                        <HStack className="items-center mb-2">
+                            <Box 
+                                className="w-8 h-8 rounded-full items-center justify-center mr-3"
+                                style={{ backgroundColor: badge.color + '20' }}
+                            >
+                                <MaterialIcons 
+                                    name={status === 'completed' ? 'check-circle' : 
+                                          status === 'error' ? 'error' : 'schedule'} 
+                                    size={16} 
+                                    color={badge.color} 
+                                />
+                            </Box>
+                            <VStack className="flex-1">
+                                <HStack className="items-baseline">
+                                    <Text className="text-lg font-bold text-gray-900">
+                                        {data?.contaminant}
+                                    </Text>
+                                    <Text className="text-lg font-bold text-gray-900 ml-1">
+                                        {data?.value}
+                                    </Text>
+                                    <Text className="text-sm text-gray-500 ml-1">
+                                        {getUnitByName(data?.contaminant)}
+                                    </Text>
+                                </HStack>
+                            </VStack>
+                        </HStack>
 
+                        <VStack className="ml-11">
+                            <HStack className="items-center mb-1">
+                                <MaterialIcons name="schedule" size={14} color="#6b7280" />
+                                <Text className="text-sm text-gray-500 ml-2">
+                                    Created: {new Date(created_at).toLocaleDateString()} at {new Date(created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
+                            </HStack>
+                            {finished_at && (
+                                <HStack className="items-center">
+                                    <MaterialIcons name="check" size={14} color="#22c55e" />
+                                    <Text className="text-sm text-gray-500 ml-2">
+                                        Finished: {new Date(finished_at).toLocaleDateString()} at {new Date(finished_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </Text>
+                                </HStack>
+                            )}
+                        </VStack>
+                    </VStack>
+                    
+                    <Box
+                        className="px-3 py-1 rounded-full"
+                        style={{ backgroundColor: badge.color }}
+                    >
+                        <Text className="text-xs font-medium text-white">
+                            {badge.label}
+                        </Text>
+                    </Box>
+                </HStack>
+            </Box>
+        );
+    };
 
+    return (
+        <Box className="flex-1 bg-gray-100">
+            {/* Header */}
+            <Box className="bg-white px-6 pt-12 pb-4">
+                <HStack className="justify-between items-center">
+                    <Text className="text-2xl font-bold text-gray-900">History</Text>
+                    <Pressable
+                        onPress={() => {
+                            if (router.canGoBack?.()) {
+                                router.back();
+                            } else {
+                                router.push('/dashboard');
+                            }
+                        }}
+                        className="w-8 h-8 items-center justify-center"
+                    >
+                        <MaterialIcons name="close" size={24} color="#6b7280" />
+                    </Pressable>
+                </HStack>
+            </Box>
 
-            <Text className="text-xs text-center text-gray-400 mt-4">
-                Last synced on May 19, 08:00 AM
-            </Text>
+            {/* Tabs */}
+            <Box className="bg-white px-6 pb-4">
+                <Tabs
+                    tabs={['all', 'pending', 'completed', 'error']}
+                    selected={selectedTab}
+                    onChange={setSelectedTab}
+                />
+            </Box>
+
+            {/* Content */}
+            <Box className="flex-1 px-6 pt-4">
+                <FlatList
+                    data={filteredData}
+                    keyExtractor={(item: History) => item.created_at}
+                    onRefresh={fetchHistory}
+                    refreshing={refreshing}
+                    contentContainerStyle={{ paddingBottom: 16 }}
+                    ListEmptyComponent={() => (
+                        <Box className="items-center justify-center py-20">
+                            <Box 
+                                className="w-20 h-20 rounded-full items-center justify-center mb-4"
+                                style={{ backgroundColor: '#f3f4f6' }}
+                            >
+                                <MaterialIcons name="history" size={32} color="#9ca3af" />
+                            </Box>
+                            <Text className="text-lg font-medium text-gray-500 text-center mb-2">
+                                No readings found
+                            </Text>
+                            <Text className="text-sm text-gray-400 text-center">
+                                Your history will appear here once you add readings
+                            </Text>
+                        </Box>
+                    )}
+                    renderItem={({ item }) => <HistoryCard item={item} />}
+                    showsVerticalScrollIndicator={false}
+                />
+            </Box>
+
+            {/* Footer */}
+            <Box className="bg-white px-6 py-4 border-t border-gray-200">
+                <Text className="text-xs text-center text-gray-400">
+                    Last synced: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+            </Box>
         </Box>
     );
 }

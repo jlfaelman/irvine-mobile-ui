@@ -22,19 +22,30 @@ export default function ConnectionStringScreen() {
     const [loading, setLoading] = useState(true);
     const [connectionString, setConnectionString] = useState('');
     const showAlert = useShowAlert();
+    const [error, setError] = useState<string | null>(null);
     useEffect(() => {
         const runInit = async () => {
-
-            const isConfigured = await checkConnectionConfiguration()
-            if (isConfigured) {
-                router.push('/auth');
-            } else setLoading(false);
+            try {
+                const isConfigured = await checkConnectionConfiguration()
+                if (isConfigured) {
+                    router.push('/auth');
+                } else setLoading(false);
+            } catch (e) {
+                console.error('Init error:', e);
+                setError('Failed to check configuration');
+                setLoading(false);
+            }
         }
         runInit();
     }, [])
     const submitConnectionString = async () => {
         try {
+            setError(null);
             const key = (connectionString || '').trim();
+            if (!key) {
+                showAlert('Error', 'Please enter a connection string or URL');
+                return;
+            }
             const resolvedUrl = getUrlForConnectionString(key);
             if (!resolvedUrl) {
                 showAlert('Invalid Connection String', 'The connection string you entered is not recognized.');
@@ -45,11 +56,24 @@ export default function ConnectionStringScreen() {
             if (Platform.OS === "web") window.location.reload();
             else router.replace('/');
         } catch (e) {
+            console.error('Submit error:', e);
             showAlert('Error', 'Failed to save configuration.');
         }
     };
 
     if (loading) return <LoadingScreen />;
+    if (error) {
+        return (
+            <Center className="flex-1 bg-white">
+                <VStack className="w-4/5 px-8 space-y-4" space="lg">
+                    <Text className="text-red-600 text-center">{error}</Text>
+                    <Pressable onPress={() => setLoading(true)} className="bg-blue-500 py-2 px-5 rounded-md items-center">
+                        <Text className="text-white font-bold">Retry</Text>
+                    </Pressable>
+                </VStack>
+            </Center>
+        );
+    }
 
     return (
         <Center className="flex-1 bg-white">

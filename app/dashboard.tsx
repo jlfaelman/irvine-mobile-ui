@@ -19,7 +19,7 @@ import { syncHistory } from '@/src/middleware/history';
 import { syncJobs } from '@/src/middleware/job';
 import { checkToken, getRefreshToken, getToken } from '@/src/middleware/jwt';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { SafeAreaView, ScrollView, useWindowDimensions, View } from 'react-native';
 import useShowAlert from './screens/alert';
@@ -45,6 +45,7 @@ export default function DashboardScreen() {
     const [username, setUsername] = useState('');
     const iconSize = width >= 1024 ? 60 : width >= 768 ? 50 : 40;
     const router = useRouter();
+    const { sync } = useLocalSearchParams();
     const showAlert = useShowAlert();
     useEffect(() => {
         const authUser = async () => {
@@ -59,7 +60,7 @@ export default function DashboardScreen() {
         const loadDashboard = async () => {
             const token = await checkToken();
 
-            const dashboardData = await loadDashboardInfo();
+            const dashboardData = await loadDashboardInfo(true);
             setDashboardInfo(dashboardData);
             setUsername(dashboardData.firstName + " " + dashboardData.lastName)
             if (token) setIsLoading(false);

@@ -25,6 +25,9 @@ export async function fetchDashboard() {
 }
 
 export async function loadDashboardInfo(isSync:boolean = false) {
+    if (isSync) {
+        await AsyncStorage.removeItem('dashboardInfo');
+    }
     const dashboardInfo = await AsyncStorage.getItem('dashboardInfo');
 
     if (!isSync && dashboardInfo) {
@@ -38,8 +41,8 @@ export async function loadDashboardInfo(isSync:boolean = false) {
         const dashboard:DashboardInfo = {
             firstName: firstName,
             lastName: lastName,
-            locations: result?.dashboard?.locations,
-            contaminants: result?.dashboard?.contaminants
+            locations: result?.dashboard?.locations ?? [],
+            contaminants: result?.dashboard?.contaminants ?? []
         };
 
         saveDashboardInfo(dashboard);
