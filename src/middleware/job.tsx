@@ -5,21 +5,19 @@ import { getRefreshToken, parseRefreshToken } from "./jwt";
 export async function createJob(newJob?: any) {
     try {
         if (!newJob) {
-            throw new Error('No job provided');
+            console.error('No job provided');
+            return false;
         }
         const jobs = await getJobs();
 
         jobs.push(newJob)
 
-        AsyncStorage.setItem('jobs', JSON.stringify(jobs));
+        await AsyncStorage.setItem('jobs', JSON.stringify(jobs));
 
         return true;
     } catch (error) {
-        console.log(error);
-
-        throw new Error('Error on creating job');
-
-
+        console.error('Error creating job:', error);
+        return false;
     }
 }
 
@@ -48,7 +46,7 @@ export async function syncJobs() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Berear ${getRefreshToken()}`,
+                'Authorization': `Bearer ${await getRefreshToken()}`,
             },
             body:body,
         });

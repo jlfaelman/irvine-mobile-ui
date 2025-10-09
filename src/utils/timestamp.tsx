@@ -4,7 +4,20 @@ export function getDeviceTimeZone(): string {
 
 export function convertToUTC(dateInput: string | Date): string {
   const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-  return date.toISOString(); // Always in UTC
+  
+  // The date object already represents the local time
+  // toISOString() automatically converts to UTC
+  return date.toISOString();
+}
+
+export function convertFromUTCToDevice(utcDateString: string): Date {
+  const utcDate = new Date(utcDateString);
+  const deviceTimeZone = getDeviceTimeZone();
+  
+  // Convert UTC to device timezone
+  const deviceDate = new Date(utcDate.toLocaleString("en-US", { timeZone: deviceTimeZone }));
+  
+  return deviceDate;
 }
 
 
@@ -33,4 +46,21 @@ export function formatForDateTimeLocalInput(date: Date): string {
     const hh = pad(date.getHours());
     const min = pad(date.getMinutes());
     return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+export function formatUTCTimeForDisplay(utcString: string): string {
+    const date = new Date(utcString);
+    return date.toISOString().replace('T', ' ').replace('Z', ' UTC');
+}
+
+export function getTimezoneOffset(): number {
+    return new Date().getTimezoneOffset();
+}
+
+export function getTimezoneOffsetString(): string {
+    const offset = getTimezoneOffset();
+    const hours = Math.floor(Math.abs(offset) / 60);
+    const minutes = Math.abs(offset) % 60;
+    const sign = offset <= 0 ? '+' : '-';
+    return `UTC${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }

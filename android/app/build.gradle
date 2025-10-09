@@ -117,6 +117,21 @@ android {
             crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
         }
     }
+    
+    // Custom APK naming
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def buildType = variant.buildType.name
+            def versionName = variant.versionName
+            def versionCode = variant.versionCode
+            
+            if (buildType == "release") {
+                outputFileName = "IrvineMobile-v${versionName}-${versionCode}.apk"
+            } else {
+                outputFileName = "IrvineMobile-${buildType}-v${versionName}-${versionCode}.apk"
+            }
+        }
+    }
     packagingOptions {
         jniLibs {
             useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)

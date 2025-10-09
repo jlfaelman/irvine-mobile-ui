@@ -9,6 +9,7 @@ import {
 } from '@/src/interface/history';
 import { clearHistory, getHistory } from '@/src/middleware/history';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList } from 'react-native';
@@ -137,7 +138,13 @@ export default function HistoryScreen() {
     };
 
     return (
-        <Box className="flex-1 bg-gray-100">
+        <LinearGradient
+            colors={['#A7C8FF', '#B9D5FF', '#FFFFFF']}
+            style={{ flex: 1 }}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+        >
+            <Box className="flex-1">
             {/* Header */}
             <Box className="bg-white px-6 pt-12 pb-4">
                 <HStack className="justify-between items-center">
@@ -201,6 +208,7 @@ export default function HistoryScreen() {
                     Last synced: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
             </Box>
-        </Box>
+            </Box>
+        </LinearGradient>
     );
 }

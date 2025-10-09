@@ -4,6 +4,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Linking, ScrollView } from 'react-native';
 
@@ -124,7 +125,13 @@ export default function TipsScreen() {
     );
 
     return (
-        <Box className="flex-1 bg-gray-100">
+        <LinearGradient
+            colors={['#A7C8FF', '#B9D5FF', '#FFFFFF']}
+            style={{ flex: 1 }}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+        >
+            <Box className="flex-1">
             {/* Header */}
             <Box className="bg-white px-6 pt-12 pb-4">
                 <HStack className="justify-between items-center">
@@ -176,6 +183,7 @@ export default function TipsScreen() {
                     </Text>
                 </Box>
             </ScrollView>
-        </Box>
+            </Box>
+        </LinearGradient>
     );
 }

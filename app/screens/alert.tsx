@@ -12,6 +12,15 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 export default function useShowAlert() {
   const toast = useToast();
+  
+  
+  // Ensure toast is properly initialized
+  if (!toast || typeof toast.show !== 'function') {
+    console.warn('Toast not properly initialized');
+    return (title: string, message?: string, status: 'info' | 'success' | 'error' = 'info') => {
+      console.log(`Alert: ${title} - ${message || ''} (${status})`);
+    };
+  }
 
   const getIconByStatus = (status: 'info' | 'success' | 'error') => {
     const map = {
@@ -24,27 +33,52 @@ export default function useShowAlert() {
 
   return (
     (title: string, message?: string, status: 'info' | 'success' | 'error' = 'info') => {
-      const icon = getIconByStatus(status);
+      try {
+        const icon = getIconByStatus(status);
 
-      toast.show({
-        placement: 'top right',
-        render: ({ id }) => (
-          <Toast nativeID={id} action={status} variant="outline">
-            <ToastTitle>
-              <HStack space="sm" className="items-center justify-between w-full">
-                <HStack space="sm" className="items-center">
-                  <MaterialIcons name={icon.name as any} size={18} color={icon.color} />
-                  <Text className="text-base font-medium">{title}</Text>
+        toast.show({
+          placement: 'top right',
+          render: ({ id }) => (
+            <Toast nativeID={id} action={status} variant="outline">
+              <ToastTitle>
+                <HStack space="sm" className="items-center justify-between w-full">
+                  <HStack space="sm" className="items-center">
+                    <MaterialIcons name={icon.name as any} size={18} color={icon.color} />
+                    <Text className="text-base font-medium">{title}</Text>
+                  </HStack>
+                  <Pressable onPress={() => {
+                    try {
+                      if (toast) {
+                        // Try different possible methods
+                        if (typeof toast.close === 'function') {
+                          toast.close(id);
+                        } else if (typeof toast.dismiss === 'function') {
+                          toast.dismiss(id);
+                        } else if (typeof toast.hide === 'function') {
+                          toast.hide(id);
+                        } else {
+                          console.warn('No valid toast close method found');
+                        }
+                      } else {
+                        console.warn('Toast not available');
+                      }
+                    } catch (error) {
+                      console.warn('Error closing toast:', error);
+                    }
+                  }}>
+                    <MaterialIcons name="close" size={16} color="#6b7280" />
+                  </Pressable>
                 </HStack>
-                <Pressable onPress={() => toast.close(id)}>
-                  <MaterialIcons name="close" size={16} color="#6b7280" />
-                </Pressable>
-              </HStack>
-            </ToastTitle>
-            {message && <ToastDescription>{message}</ToastDescription>}
-          </Toast>
-        ),
-      });
+              </ToastTitle>
+              {message && <ToastDescription>{message}</ToastDescription>}
+            </Toast>
+          ),
+        });
+      } catch (error) {
+        console.warn('Error showing alert:', error);
+        // Fallback to console log if toast fails
+        console.log(`Alert: ${title} - ${message || ''}`);
+      }
     }
   );
 }

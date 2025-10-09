@@ -12,7 +12,8 @@ export async function addHistory(job: object | History, isNew: boolean = false) 
             let history: Array<History> = await getHistory();
 
             if (!job) {
-                throw new Error('No job provided');
+                console.error('No job provided');
+                return false;
             }
 
             let newHistory: History = {
@@ -25,7 +26,7 @@ export async function addHistory(job: object | History, isNew: boolean = false) 
 
             history.push(newHistory)
            
-            AsyncStorage.setItem('history', JSON.stringify(history));
+            await AsyncStorage.setItem('history', JSON.stringify(history));
 
 
         }
@@ -34,13 +35,12 @@ export async function addHistory(job: object | History, isNew: boolean = false) 
             
             history.push(job)
             
-            AsyncStorage.setItem('history', JSON.stringify(history));
+            await AsyncStorage.setItem('history', JSON.stringify(history));
         }
         return true;
     } catch (error) {
-        console.log(error);
-
-        throw new Error('Error on adding history');
+        console.error('Error adding history:', error);
+        return false;
     }
 
 }

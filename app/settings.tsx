@@ -5,8 +5,11 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { clearAllStorage } from '@/src/middleware/configuration';
+import { loadDashboardInfo } from '@/src/middleware/dashboard';
 import { syncHistory, syncJobs } from '@/src/middleware/history';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
@@ -33,16 +36,26 @@ export default function SettingsScreen() {
 
     const handleClearCache = () => {
         Alert.alert(
-            'Clear Cache',
-            'This will remove all local data. Are you sure?',
+            'Refresh Data',
+            'This will refresh locations and contaminants from the server. Are you sure?',
             [
                 { text: 'Cancel', style: 'cancel' },
                 { 
                     text: 'Clear', 
                     style: 'destructive',
                     onPress: async () => {
-                        await clearAllStorage();
-                        showAlert('Cache Cleared', 'All local data has been removed', 'success');
+                        try {
+                            // Clear only dashboard info (locations and contaminants)
+                            await AsyncStorage.removeItem('dashboardInfo');
+                            
+                            // Refresh dashboard info from API
+                            await loadDashboardInfo(true);
+                            
+                            showAlert('Data Refreshed', 'Locations and contaminants have been updated from server', 'success');
+                        } catch (error) {
+                            console.error('Error clearing cache:', error);
+                            showAlert('Error', 'Failed to refresh data. Please try again.', 'error');
+                        }
                     }
                 }
             ]
@@ -118,7 +131,13 @@ export default function SettingsScreen() {
     );
 
     return (
-        <Box className="flex-1 bg-gray-100">
+        <LinearGradient
+            colors={['#A7C8FF', '#B9D5FF', '#FFFFFF']}
+            style={{ flex: 1 }}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+        >
+            <Box className="flex-1">
             {/* Header */}
             <Box className="bg-white px-6 pt-12 pb-4">
                 <HStack className="justify-between items-center">
@@ -150,9 +169,9 @@ export default function SettingsScreen() {
                         }
                     />
                     <SettingItem
-                        icon="delete-sweep"
-                        title="Clear Cache"
-                        subtitle="Remove all local data"
+                        icon="refresh"
+                        title="Refresh Data"
+                        subtitle="Update locations and contaminants from server"
                         onPress={handleClearCache}
                         isDestructive
                     />
@@ -213,6 +232,7 @@ export default function SettingsScreen() {
                     </Text>
                 </Box>
             </ScrollView>
-        </Box>
+            </Box>
+        </LinearGradient>
     );
 }

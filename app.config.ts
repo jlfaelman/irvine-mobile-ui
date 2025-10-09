@@ -1,17 +1,25 @@
-import 'dotenv/config';
+// URL Configuration - centralized URLs to avoid environment variable issues
+const URL_CONFIG = {
+  abp: 'https://abp-api.irvineas.com/api',
+  cantilan: 'https://cantilanwd-api.irvineas.com/api',
+  thepalms: 'https://thepalms-api.irvineas.com/api',
+  dev: 'http://localhost:5000/api',
+};
 
 export default () => ({
   expo: {
-    name: 'Irvine Mobile App',
+    name: 'IrvineMobile',
     slug: 'irvine-mobile-app',
     version: '1.0.0',
+    scheme: 'irvine-mobile',
     extra: {
-      API_URL: process.env.EXPO_PUBLIC_API_URL,
-      // Connection string mappings
-      CONN_abp: process.env.EXPO_PUBLIC_CONN_abp,
-      CONN_cantilan: process.env.EXPO_PUBLIC_CONN_cantilan,
-      CONN_thepalms: process.env.EXPO_PUBLIC_CONN_thepalms,
-      CONN_dev: process.env.EXPO_PUBLIC_CONN_dev,
+      // Use centralized config instead of environment variables
+      API_URL: URL_CONFIG.abp,
+      // Connection string mappings from config
+      CONN_abp: URL_CONFIG.abp,
+      CONN_cantilan: URL_CONFIG.cantilan,
+      CONN_thepalms: URL_CONFIG.thepalms,
+      CONN_dev: URL_CONFIG.dev,
       eas: {
         "projectId": "f638225c-661c-4bb6-82f2-618a9ec5fb65"
       }

@@ -18,9 +18,10 @@ export async function clearAllStorage() {
 export async function getConfigURL(){
   const url = await AsyncStorage.getItem('configuration_url');
   if (url) return url;
-  // Fallback to env if no stored URL
-  // Note: Only EXPO_PUBLIC_* are exposed to client
-  return process.env.EXPO_PUBLIC_API_URL ?? null;
+  // Fallback to config from app.config.ts
+  const Constants = require('expo-constants');
+  const extra = Constants.default?.expoConfig?.extra;
+  return extra?.API_URL ?? 'https://abp-api.irvineas.com/api';
 } 
 
 export async function clearConfigURL(){
