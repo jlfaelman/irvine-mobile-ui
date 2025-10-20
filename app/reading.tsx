@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { Location } from '@/src/interface/dashboard';
+import { loadDashboardInfo } from '@/src/middleware/dashboard';
 import { addHistory } from '@/src/middleware/history';
 import { createJob } from '@/src/middleware/job';
 import { contaminantOptimizer, OptimizedContaminant } from '@/src/utils/contaminant-optimizer';
@@ -45,17 +46,34 @@ export default function AddReadingScreen() {
     const canSave = isFormComplete && isDateValid;
     const { parameters, contaminants, from } = useLocalSearchParams();
     const showAlert = useShowAlert();
+
     useEffect(() => {
         const raw = Array.isArray(parameters) ? parameters[0] : parameters;
-        if (typeof contaminants === "string") {
-            const parsedContaminants = JSON.parse(contaminants);
-            // Optimize contaminants for better performance
-            contaminantOptimizer.getOptimizedContaminants(parsedContaminants)
-                .then(optimized => setContaminants(optimized))
-                .catch(() => setContaminants(parsedContaminants));
-        } else {
-            setContaminants(c);
-        }
+        
+        // Always fetch fresh contaminants from dashboard data
+        const loadFreshContaminants = async () => {
+            try {
+                const dashboardData = await loadDashboardInfo(false);
+                if (dashboardData?.contaminants) {
+                    const optimized = await contaminantOptimizer.getOptimizedContaminants(dashboardData.contaminants);
+                    setContaminants(optimized);
+                }
+            } catch (error) {
+                console.error('Error loading fresh contaminants:', error);
+                // Fallback to URL parameters if fresh data fails
+                if (typeof contaminants === "string") {
+                    const parsedContaminants = JSON.parse(contaminants);
+                    contaminantOptimizer.getOptimizedContaminants(parsedContaminants)
+                        .then(optimized => setContaminants(optimized))
+                        .catch(() => setContaminants(parsedContaminants));
+                } else {
+                    setContaminants(c);
+                }
+            }
+        };
+        
+        loadFreshContaminants();
+        
         try {
             const parsed = JSON.parse(raw);
             setLocation(parsed);
@@ -393,6 +411,25 @@ export default function AddReadingScreen() {
                                         <MaterialIcons name="clear" size={16} color="#6b7280" />
                                     </Pressable>
                                 )}
+                                <Pressable 
+                                    onPress={async () => {
+                                        try {
+                                            const dashboardData = await loadDashboardInfo(true);
+                                            if (dashboardData?.contaminants) {
+                                                const optimized = await contaminantOptimizer.getOptimizedContaminants(dashboardData.contaminants);
+                                                setContaminants(optimized);
+                                                showAlert('Refreshed', 'Contaminants have been updated', 'success');
+                                            }
+                                        } catch (error) {
+                                            console.error('Error refreshing contaminants:', error);
+                                            showAlert('Error', 'Failed to refresh contaminants', 'error');
+                                        }
+                                    }}
+                                    className="ml-2 w-8 h-8 items-center justify-center"
+                                    hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+                                >
+                                    <MaterialIcons name="refresh" size={20} color="#3b82f6" />
+                                </Pressable>
                                 <Pressable 
                                     onPress={() => setIsOpen(false)}
                                     className="ml-2 w-8 h-8 items-center justify-center"

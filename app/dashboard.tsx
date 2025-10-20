@@ -22,7 +22,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { RefreshControl, SafeAreaView, ScrollView, useWindowDimensions } from 'react-native';
+import { Alert, RefreshControl, SafeAreaView, ScrollView, useWindowDimensions } from 'react-native';
 import useShowAlert from './screens/alert';
 import Header from './screens/header';
 import LoadingScreen from './screens/loading';
@@ -95,7 +95,39 @@ export default function DashboardScreen() {
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+    const checkConnectivity = async () => {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch('https://www.google.com/favicon.ico', {
+                method: 'HEAD',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            return response.ok;
+        } catch (error) {
+            console.error('Error checking connectivity:', error);
+            return false;
+        }
+    };
+
+    const showNoInternetAlert = () => {
+        Alert.alert(
+            'No Internet Connection',
+            'Action requires stable internet connection',
+            [{ text: 'OK', style: 'default' }]
+        );
+    };
+
     const syncJobsToDatabase = async () => {
+        const connected = await checkConnectivity();
+        if (!connected) {
+            showNoInternetAlert();
+            return;
+        }
+
         setIsSyncing(true);
 
         const status = await syncJobs();
@@ -107,10 +139,16 @@ export default function DashboardScreen() {
             await sleep(2000); 
             setIsSyncing(false);
 
-            showAlert('Sync Completed', "Data saved to database successfully.",'success');
+            showAlert('Sync Completed', "Queue has been synchronized to cloud successfully.",'success');
         }
     };
     const syncDashboard = async () => {
+        const connected = await checkConnectivity();
+        if (!connected) {
+            showNoInternetAlert();
+            return;
+        }
+
         setIsRefreshing(true);
         try {
             const dashboardData = await loadDashboardInfo(true);
@@ -132,7 +170,7 @@ export default function DashboardScreen() {
 
 
     if (isLoading) return <LoadingScreen message='Logged In successfully. Loading Dashboard for you.' />
-    if (isSyncing) return <LoadingScreen message='Data Syncing to Database.' />
+    if (isSyncing) return <LoadingScreen message='Syncing queue to cloud...' />
     else return (
         <LinearGradient
             colors={['#A7C8FF', '#B9D5FF', '#FFFFFF']}
@@ -241,7 +279,7 @@ export default function DashboardScreen() {
                         }}
                     >
                         <MaterialIcons name="sync" size={24} color="white" />
-                        <Text className="text-white font-semibold ml-2">Sync Locally</Text>
+                        <Text className="text-white font-semibold ml-2">Sync Queue to Cloud</Text>
                     </Pressable>
                 </Box>
                 {/* Action Cards */}

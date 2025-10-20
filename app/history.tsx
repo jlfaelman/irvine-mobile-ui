@@ -7,6 +7,7 @@ import { VStack } from '@/components/ui/vstack';
 import {
     History
 } from '@/src/interface/history';
+import { loadDashboardInfo } from '@/src/middleware/dashboard';
 import { clearHistory, getHistory } from '@/src/middleware/history';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,18 +27,70 @@ export default function HistoryScreen() {
     const [selectedTab, setSelectedTab] = useState('all');
     const [historyList, setHistoryList] = useState<History[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [dashboardInfo, setDashboardInfo] = useState<any>(null);
+    const [isConnected, setIsConnected] = useState(true);
+
+    const checkConnectivity = async () => {
+        try {
+            // Simple connectivity check by attempting to fetch a small resource
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch('https://www.google.com/favicon.ico', {
+                method: 'HEAD',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            const connected = response.ok;
+            setIsConnected(connected);
+            return connected;
+        } catch (error) {
+            console.error('Error checking connectivity:', error);
+            setIsConnected(false);
+            return false;
+        }
+    };
+
+    const showNoInternetAlert = () => {
+        Alert.alert(
+            'No Internet Connection',
+            'Action requires stable internet connection',
+            [{ text: 'OK', style: 'default' }]
+        );
+    };
 
     const fetchHistory = async () => {
         try {
             setRefreshing(true);
             const history = await getHistory();
             setHistoryList(history || []);
+            
+            // Check connectivity before refreshing dashboard data
+            const connected = await checkConnectivity();
+            if (!connected) {
+                showNoInternetAlert();
+                return;
+            }
+            
+            // Also refresh dashboard data to get latest location info
+            await loadDashboardData();
         } catch (err) {
             Alert.alert('Error', 'Failed to load history.');
         } finally {
             setRefreshing(false);
         }
     };
+
+    const loadDashboardData = async () => {
+        try {
+            const dashboardData = await loadDashboardInfo(false);
+            setDashboardInfo(dashboardData);
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    };
+
     const clear = async () => {
         await clearHistory();
     }
@@ -51,19 +104,75 @@ export default function HistoryScreen() {
 
     useEffect(() => {
         fetchHistory();
+        loadDashboardData();
         const parsed_c = JSON.parse(Array.isArray(contaminants) ? contaminants[0] : contaminants)
         setC(parsed_c)
 
+        // Check initial connectivity
+        checkConnectivity();
     }, []);
 
     const filteredData =
         selectedTab === 'all'
             ? historyList
             : historyList.filter((item: History) => item?.status === selectedTab);
+    
+    // Sort by created_at in descending order (newest first)
+    const sortedData = [...filteredData].sort((a, b) => {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateB - dateA; // Descending order (newest first)
+    });
 
     const HistoryCard = ({ item }: { item: History }) => {
         const { data, status, created_at, finished_at }: any = item;
         const badge = statusBadge[status] || { label: status, color: '#9ca3af' };
+        
+        // Extract location information from data or dashboard
+        const getLocationInfo = () => {
+            // First try to get from data object
+            if (data?.location?.name) {
+                return {
+                    name: data.location.name,
+                    description: data.location.description || ''
+                };
+            }
+            
+            // Try alternative data structure
+            if (data?.locationName) {
+                return {
+                    name: data.locationName,
+                    description: data.locationDescription || ''
+                };
+            }
+            
+            // Fallback to dashboard data using location ID
+            if (data?.location && dashboardInfo?.locations) {
+                const location = dashboardInfo.locations.find((loc: any) => loc.id === data.location);
+                if (location) {
+                    return {
+                        name: location.name,
+                        description: location.description || ''
+                    };
+                }
+            }
+            
+            return {
+                name: 'Unknown Location',
+                description: ''
+            };
+        };
+        
+        const locationInfo = getLocationInfo();
+        
+        // Debug logging to understand data structure
+        if (__DEV__) {
+            console.log('History item data:', {
+                data,
+                locationInfo,
+                dashboardLocations: dashboardInfo?.locations?.length || 0
+            });
+        }
 
         return (
             <Box 
@@ -103,6 +212,20 @@ export default function HistoryScreen() {
                                         {getUnitByName(data?.contaminant)}
                                     </Text>
                                 </HStack>
+                                
+                                {/* Location Information */}
+                                <HStack className="items-center mt-2">
+                                    <MaterialIcons name="location-on" size={14} color="#6b7280" />
+                                    <Text className="text-sm text-gray-600 ml-1 font-medium">
+                                        {locationInfo.name}
+                                    </Text>
+                                    {locationInfo.description && (
+                                        <Text className="text-xs text-gray-400 ml-2">
+                                            - {locationInfo.description}
+                                        </Text>
+                                    )}
+                                </HStack>
+                                
                             </VStack>
                         </HStack>
 
@@ -176,7 +299,7 @@ export default function HistoryScreen() {
             {/* Content */}
             <Box className="flex-1 px-6 pt-4">
                 <FlatList
-                    data={filteredData}
+                    data={sortedData}
                     keyExtractor={(item: History) => item.created_at}
                     onRefresh={fetchHistory}
                     refreshing={refreshing}

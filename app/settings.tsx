@@ -7,6 +7,7 @@ import { VStack } from '@/components/ui/vstack';
 import { clearAllStorage } from '@/src/middleware/configuration';
 import { loadDashboardInfo } from '@/src/middleware/dashboard';
 import { syncHistory, syncJobs } from '@/src/middleware/history';
+import { contaminantOptimizer } from '@/src/utils/contaminant-optimizer';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,14 +22,46 @@ export default function SettingsScreen() {
     const router = useRouter();
     const showAlert = useShowAlert();
 
+    const checkConnectivity = async () => {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch('https://www.google.com/favicon.ico', {
+                method: 'HEAD',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            return response.ok;
+        } catch (error) {
+            console.error('Error checking connectivity:', error);
+            return false;
+        }
+    };
+
+    const showNoInternetAlert = () => {
+        Alert.alert(
+            'No Internet Connection',
+            'Action requires stable internet connection',
+            [{ text: 'OK', style: 'default' }]
+        );
+    };
+
     const handleSyncNow = async () => {
+        const connected = await checkConnectivity();
+        if (!connected) {
+            showNoInternetAlert();
+            return;
+        }
+
         setIsSyncing(true);
         try {
             await syncJobs();
             await syncHistory();
-            showAlert('Sync Complete', 'All data has been synchronized successfully', 'success');
+            showAlert('Sync Complete', 'Queue has been synchronized to cloud successfully', 'success');
         } catch (error) {
-            showAlert('Sync Failed', 'Failed to sync data. Please try again.', 'error');
+            showAlert('Sync Failed', 'Failed to sync queue to cloud. Please try again.', 'error');
         } finally {
             setIsSyncing(false);
         }
@@ -36,7 +69,7 @@ export default function SettingsScreen() {
 
     const handleClearCache = () => {
         Alert.alert(
-            'Refresh Data',
+            'Update Contaminants and Locations',
             'This will refresh locations and contaminants from the server. Are you sure?',
             [
                 { text: 'Cancel', style: 'cancel' },
@@ -44,14 +77,27 @@ export default function SettingsScreen() {
                     text: 'Clear', 
                     style: 'destructive',
                     onPress: async () => {
+                        const connected = await checkConnectivity();
+                        if (!connected) {
+                            showNoInternetAlert();
+                            return;
+                        }
+
                         try {
-                            // Clear only dashboard info (locations and contaminants)
+                            console.log('Starting data refresh...');
+                            
+                            // Clear all data-related caches
                             await AsyncStorage.removeItem('dashboardInfo');
+                            console.log('Cleared dashboardInfo cache');
+                            
+                            await contaminantOptimizer.clearCache();
+                            console.log('Cleared contaminant optimizer cache');
                             
                             // Refresh dashboard info from API
-                            await loadDashboardInfo(true);
+                            const refreshedData = await loadDashboardInfo(true);
+                            console.log('Refreshed dashboard data:', refreshedData);
                             
-                            showAlert('Data Refreshed', 'Locations and contaminants have been updated from server', 'success');
+                            showAlert('Update Complete', 'Contaminants and locations have been updated from server', 'success');
                         } catch (error) {
                             console.error('Error clearing cache:', error);
                             showAlert('Error', 'Failed to refresh data. Please try again.', 'error');
@@ -157,7 +203,7 @@ export default function SettingsScreen() {
                     <Text className="text-lg font-semibold text-gray-900 mb-3">Data Management</Text>
                     <SettingItem
                         icon="sync"
-                        title="Sync Now"
+                        title="Sync Queue to Cloud"
                         subtitle="Synchronize all data with server"
                         onPress={handleSyncNow}
                         rightElement={
@@ -170,7 +216,7 @@ export default function SettingsScreen() {
                     />
                     <SettingItem
                         icon="refresh"
-                        title="Refresh Data"
+                        title="Update Contaminants and Locations"
                         subtitle="Update locations and contaminants from server"
                         onPress={handleClearCache}
                         isDestructive
@@ -228,7 +274,7 @@ export default function SettingsScreen() {
                         Irvine Mobile App v1.0.0
                     </Text>
                     <Text className="text-xs text-gray-400 text-center mt-1">
-                        © 2024 Irvine Analytics Services
+                        © 2024 Irvine Analytics Solutions Inc.
                     </Text>
                 </Box>
             </ScrollView>
