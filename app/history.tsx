@@ -28,50 +28,12 @@ export default function HistoryScreen() {
     const [historyList, setHistoryList] = useState<History[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [dashboardInfo, setDashboardInfo] = useState<any>(null);
-    const [isConnected, setIsConnected] = useState(true);
-
-    const checkConnectivity = async () => {
-        try {
-            // Simple connectivity check by attempting to fetch a small resource
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            
-            const response = await fetch('https://www.google.com/favicon.ico', {
-                method: 'HEAD',
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            const connected = response.ok;
-            setIsConnected(connected);
-            return connected;
-        } catch (error) {
-            console.error('Error checking connectivity:', error);
-            setIsConnected(false);
-            return false;
-        }
-    };
-
-    const showNoInternetAlert = () => {
-        Alert.alert(
-            'No Internet Connection',
-            'Action requires stable internet connection',
-            [{ text: 'OK', style: 'default' }]
-        );
-    };
 
     const fetchHistory = async () => {
         try {
             setRefreshing(true);
             const history = await getHistory();
             setHistoryList(history || []);
-            
-            // Check connectivity before refreshing dashboard data
-            const connected = await checkConnectivity();
-            if (!connected) {
-                showNoInternetAlert();
-                return;
-            }
             
             // Also refresh dashboard data to get latest location info
             await loadDashboardData();
@@ -107,9 +69,6 @@ export default function HistoryScreen() {
         loadDashboardData();
         const parsed_c = JSON.parse(Array.isArray(contaminants) ? contaminants[0] : contaminants)
         setC(parsed_c)
-
-        // Check initial connectivity
-        checkConnectivity();
     }, []);
 
     const filteredData =

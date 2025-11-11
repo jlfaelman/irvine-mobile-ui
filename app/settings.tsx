@@ -22,39 +22,8 @@ export default function SettingsScreen() {
     const router = useRouter();
     const showAlert = useShowAlert();
 
-    const checkConnectivity = async () => {
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            
-            const response = await fetch('https://www.google.com/favicon.ico', {
-                method: 'HEAD',
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            return response.ok;
-        } catch (error) {
-            console.error('Error checking connectivity:', error);
-            return false;
-        }
-    };
-
-    const showNoInternetAlert = () => {
-        Alert.alert(
-            'No Internet Connection',
-            'Action requires stable internet connection',
-            [{ text: 'OK', style: 'default' }]
-        );
-    };
 
     const handleSyncNow = async () => {
-        const connected = await checkConnectivity();
-        if (!connected) {
-            showNoInternetAlert();
-            return;
-        }
-
         setIsSyncing(true);
         try {
             await syncJobs();
@@ -77,12 +46,6 @@ export default function SettingsScreen() {
                     text: 'Clear', 
                     style: 'destructive',
                     onPress: async () => {
-                        const connected = await checkConnectivity();
-                        if (!connected) {
-                            showNoInternetAlert();
-                            return;
-                        }
-
                         try {
                             console.log('Starting data refresh...');
                             

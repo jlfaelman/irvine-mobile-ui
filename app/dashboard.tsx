@@ -22,7 +22,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, RefreshControl, SafeAreaView, ScrollView, useWindowDimensions } from 'react-native';
+import { RefreshControl, SafeAreaView, ScrollView, useWindowDimensions } from 'react-native';
 import useShowAlert from './screens/alert';
 import Header from './screens/header';
 import LoadingScreen from './screens/loading';
@@ -95,39 +95,8 @@ export default function DashboardScreen() {
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-    const checkConnectivity = async () => {
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            
-            const response = await fetch('https://www.google.com/favicon.ico', {
-                method: 'HEAD',
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            return response.ok;
-        } catch (error) {
-            console.error('Error checking connectivity:', error);
-            return false;
-        }
-    };
-
-    const showNoInternetAlert = () => {
-        Alert.alert(
-            'No Internet Connection',
-            'Action requires stable internet connection',
-            [{ text: 'OK', style: 'default' }]
-        );
-    };
 
     const syncJobsToDatabase = async () => {
-        const connected = await checkConnectivity();
-        if (!connected) {
-            showNoInternetAlert();
-            return;
-        }
-
         setIsSyncing(true);
 
         const status = await syncJobs();
@@ -143,12 +112,6 @@ export default function DashboardScreen() {
         }
     };
     const syncDashboard = async () => {
-        const connected = await checkConnectivity();
-        if (!connected) {
-            showNoInternetAlert();
-            return;
-        }
-
         setIsRefreshing(true);
         try {
             const dashboardData = await loadDashboardInfo(true);
