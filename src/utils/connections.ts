@@ -11,6 +11,7 @@ function getConfigConnectionMap(): ConnectionMap {
 		if (extra.CONN_abp) map.abp = extra.CONN_abp;
 		if (extra.CONN_cantilan) map.cantilan = extra.CONN_cantilan;
 		if (extra.CONN_thepalms) map.thepalms = extra.CONN_thepalms;
+		if (extra.CONN_thepalms) map.thepalms = extra.CONN_infinity;
 		if (extra.CONN_dev) map.dev = extra.CONN_dev;
 	}
 	
