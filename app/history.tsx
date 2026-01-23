@@ -8,7 +8,7 @@ import {
     History
 } from '@/src/interface/history';
 import { loadDashboardInfo } from '@/src/middleware/dashboard';
-import { clearHistory, getHistory } from '@/src/middleware/history';
+import { clearHistory, getHistory, removeHistoryItem } from '@/src/middleware/history';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -123,15 +123,29 @@ export default function HistoryScreen() {
         };
         
         const locationInfo = getLocationInfo();
-        
-        // Debug logging to understand data structure
-        if (__DEV__) {
-            console.log('History item data:', {
-                data,
-                locationInfo,
-                dashboardLocations: dashboardInfo?.locations?.length || 0
-            });
-        }
+
+
+        const confirmDelete = (createdAt: string) => {
+            Alert.alert('Delete reading', 'Delete this pending reading?', [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const ok = await removeHistoryItem(createdAt);
+                            if (ok) {
+                                await fetchHistory();
+                            } else {
+                                Alert.alert('Error', 'Failed to delete the item.');
+                            }
+                        } catch (error) {
+                            Alert.alert('Error', 'Failed to delete the item.');
+                        }
+                    }
+                }
+            ]);
+        };
 
         return (
             <Box 
@@ -206,13 +220,24 @@ export default function HistoryScreen() {
                         </VStack>
                     </VStack>
                     
-                    <Box
-                        className="px-3 py-1 rounded-full"
-                        style={{ backgroundColor: badge.color }}
-                    >
-                        <Text className="text-xs font-medium text-white">
-                            {badge.label}
-                        </Text>
+                    <Box className="items-end">
+                        {status === 'pending' && (
+                            <Pressable
+                                onPress={() => confirmDelete(created_at)}
+                                className="mb-2 w-10 h-10 items-center justify-center"
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <MaterialIcons name="delete" size={24} color="#ef4444" />
+                            </Pressable>
+                        )}
+                        <Box
+                            className="px-3 py-1 rounded-full"
+                            style={{ backgroundColor: badge.color }}
+                        >
+                            <Text className="text-xs font-medium text-white">
+                                {badge.label}
+                            </Text>
+                        </Box>
                     </Box>
                 </HStack>
             </Box>

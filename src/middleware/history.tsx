@@ -99,3 +99,34 @@ export async function getHistory() {
 
     return history ? JSON.parse(history) : [];
 }
+
+export async function removeHistoryItem(created_at: string) {
+    try {
+        const raw = await AsyncStorage.getItem('history');
+        const history: History[] = raw ? JSON.parse(raw) : [];
+
+        // Find the item to remove so we can also remove any matching job entry
+        const itemToRemove = history.find(h => h.created_at === created_at);
+
+        const filtered = history.filter(h => h.created_at !== created_at);
+        await AsyncStorage.setItem('history', JSON.stringify(filtered));
+
+        // If the history item references a job id, remove it from the jobs queue as well
+        try {
+            const jobId = itemToRemove?.data?.id;
+            if (jobId) {
+                const jobsRaw = await AsyncStorage.getItem('jobs');
+                const jobs = jobsRaw ? JSON.parse(jobsRaw) : [];
+                const filteredJobs = jobs.filter((j: any) => j.id !== jobId);
+                await AsyncStorage.setItem('jobs', JSON.stringify(filteredJobs));
+            }
+
+        } catch (innerError) {
+            console.error('Error removing associated job:', innerError);
+        }
+        return true;
+    } catch (error) {
+        console.error('Error removing history item:', error);
+        return false;
+    }
+}

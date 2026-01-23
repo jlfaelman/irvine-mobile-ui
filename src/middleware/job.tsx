@@ -36,7 +36,11 @@ export async function syncJobs() {
         const API_URL = await getConfigURL();
         const user = await parseRefreshToken()
         const jobs = await getJobs();
-        if(!jobs || jobs.length <= 0) return false;
+        if(!jobs || jobs.length <= 0) {
+            console.log('No jobs to sync');
+            return false;
+        }
+        console.log('Syncing jobs:', jobs);
         const body = JSON.stringify({
             jobs: await getJobs(),
             sync_at: new Date().toISOString(),
@@ -50,11 +54,14 @@ export async function syncJobs() {
             },
             body:body,
         });
-        // console.log(body)
+        // Log request body for debugging (trimmed)
+        try { console.log('Job sync request body:', body.length > 1000 ? body.slice(0,1000) + '... (truncated)' : body); } catch {}
         const jobsInfo = await request.json();
+        console.log('Jobs synced, server response:', jobsInfo);
         await clearJob()
         return true
     } catch (error) {
+        console.error('Error syncing jobs:', error);
         return error;
     }
 
