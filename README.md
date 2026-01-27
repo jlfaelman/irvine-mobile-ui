@@ -1,3 +1,65 @@
+Irvine Mobile
+
+Small, focused Expo app used for field readings and dashboards.
+
+## Prerequisites
+- Node.js (18+ recommended)
+- npm (or use `corepack` + pnpm/yarn if you prefer)
+- Expo CLI / EAS CLI for production builds (optional)
+
+## Quick start
+1. Install exact deps from lockfile:
+
+```bash
+npm ci
+```
+
+2. Start development:
+
+```bash
+npm run start
+# or
+npx expo start
+```
+
+## Validation (run when dependencies change)
+- Install from lockfile: `npm ci`
+- Lint: `npm run lint`
+- Type check: `npx tsc --noEmit`
+- Security audit: `npm audit --audit-level=high`
+
+You can combine checks in an npm script `validate` (recommended).
+
+## Building releases
+- Preferred: use EAS for production builds:
+
+```bash
+npx eas build -p android --profile production
+npx eas build -p ios --profile production
+```
+
+- Local Android assemble check (Windows):
+
+```bash
+cd android
+.\gradlew.bat assembleDebug
+```
+
+Place final artifacts (AAB/APK/IPA) into the `release/` folder and include a small metadata text file with branch, commit SHA and build date.
+
+## Release folder
+See `release/README.md` for naming and metadata guidelines.
+
+## CI & Dependabot
+- Add a CI job (GitHub Actions) that runs `npm ci`, `npm run lint`, `npx tsc --noEmit` and `npm audit` on PRs that touch `package.json`/`package-lock.json`.
+- Use Dependabot or Renovate to open dependency update PRs automatically.
+
+## Contributing
+- Follow lint and type checks before opening PRs.
+- Keep `console.log` and `any` usage under review — aim to remove them for production.
+
+---
+Updated: concise project instructions and validation steps.
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
