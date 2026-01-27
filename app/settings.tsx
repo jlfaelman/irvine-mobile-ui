@@ -234,7 +234,7 @@ export default function SettingsScreen() {
                 {/* App Info */}
                 <Box className="items-center py-8">
                     <Text className="text-sm text-gray-400 text-center">
-                        Irvine Mobile App v1.0.0
+                        Irvine Mobile App v1.0.5
                     </Text>
                     <Text className="text-xs text-gray-400 text-center mt-1">
                         © 2024 Irvine Analytics Solutions Inc.
