@@ -11,7 +11,7 @@ export default () => ({
   expo: {
     name: 'IrvineMobile',
     slug: 'irvine-mobile-app',
-    version: '1.0.5',
+    version: '1.0.6',
     scheme: 'irvine-mobile',
     extra: {
       // Use centralized config instead of environment variables
