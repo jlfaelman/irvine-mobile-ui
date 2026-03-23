@@ -17,7 +17,7 @@ import { Alert, FlatList } from 'react-native';
 const statusBadge:any = {
     pending: { label: 'Pending', color: '#facc15' },
     completed: { label: 'Completed', color: '#22c55e' },
-    error: { label: 'Error', color: '#ef4444' },
+    failed: { label: 'Failed', color: '#ef4444' },
 };
 
 export default function HistoryScreen() {
@@ -73,8 +73,8 @@ export default function HistoryScreen() {
 
     const filteredData =
         selectedTab === 'all'
-            ? historyList
-            : historyList.filter((item: History) => item?.status === selectedTab);
+            ? historyList.filter((item: History) => item?.status !== 'active')
+            : historyList.filter((item: History) => item?.status === selectedTab && item?.status !== 'active');
     
     // Sort by created_at in descending order (newest first)
     const sortedData = [...filteredData].sort((a, b) => {
@@ -168,7 +168,7 @@ export default function HistoryScreen() {
                             >
                                 <MaterialIcons 
                                     name={status === 'completed' ? 'check-circle' : 
-                                          status === 'error' ? 'error' : 'schedule'} 
+                                          status === 'failed' ? 'error' : 'schedule'} 
                                     size={16} 
                                     color={badge.color} 
                                 />
@@ -274,7 +274,7 @@ export default function HistoryScreen() {
             {/* Tabs */}
             <Box className="bg-white px-6 pb-4">
                 <Tabs
-                    tabs={['all', 'pending', 'completed', 'error']}
+                    tabs={['all', 'pending', 'completed', 'failed']}
                     selected={selectedTab}
                     onChange={setSelectedTab}
                 />
