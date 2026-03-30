@@ -8,11 +8,11 @@ import {
     History
 } from '@/src/interface/history';
 import { loadDashboardInfo } from '@/src/middleware/dashboard';
-import { clearHistory, getHistory, removeHistoryItem } from '@/src/middleware/history';
+import { clearHistory, getHistory, removeHistoryItem, syncHistory } from '@/src/middleware/history';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert, FlatList } from 'react-native';
 const statusBadge:any = {
     pending: { label: 'Pending', color: '#facc15' },
@@ -32,13 +32,20 @@ export default function HistoryScreen() {
     const fetchHistory = async () => {
         try {
             setRefreshing(true);
+            // Sync from API first so user_name and statuses are always up to date
+            await syncHistory();
             const history = await getHistory();
             setHistoryList(history || []);
-            
-            // Also refresh dashboard data to get latest location info
             await loadDashboardData();
         } catch (err) {
-            Alert.alert('Error', 'Failed to load history.');
+            // Sync failed (e.g. offline) — fall back to whatever is cached locally
+            try {
+                const history = await getHistory();
+                setHistoryList(history || []);
+                await loadDashboardData();
+            } catch {
+                Alert.alert('Error', 'Failed to load history.');
+            }
         } finally {
             setRefreshing(false);
         }
@@ -64,27 +71,31 @@ export default function HistoryScreen() {
     }
 
 
-    useEffect(() => {
-        fetchHistory();
-        loadDashboardData();
-        const parsed_c = JSON.parse(Array.isArray(contaminants) ? contaminants[0] : contaminants)
-        setC(parsed_c)
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchHistory();
+            loadDashboardData();
+            try {
+                const raw = Array.isArray(contaminants) ? contaminants[0] : contaminants;
+                if (raw) setC(JSON.parse(raw));
+            } catch (e) {
+                setC([]);
+            }
+        }, [contaminants])
+    );
 
     const filteredData =
         selectedTab === 'all'
             ? historyList.filter((item: History) => item?.status !== 'active')
             : historyList.filter((item: History) => item?.status === selectedTab && item?.status !== 'active');
     
-    // Sort by created_at in descending order (newest first)
-    const sortedData = [...filteredData].sort((a, b) => {
-        const dateA = new Date(a.created_at).getTime();
-        const dateB = new Date(b.created_at).getTime();
-        return dateB - dateA; // Descending order (newest first)
-    });
+    // Sort by created_at descending (newest first)
+    const sortedData = [...filteredData].sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
 
     const HistoryCard = ({ item }: { item: History }) => {
-        const { data, status, created_at, finished_at }: any = item;
+        const { data, status, created_at, finished_at, user_name }: any = item;
         const badge = statusBadge[status] || { label: status, color: '#9ca3af' };
         
         // Extract location information from data or dashboard
@@ -198,6 +209,16 @@ export default function HistoryScreen() {
                                         </Text>
                                     )}
                                 </HStack>
+
+                                {/* Recorded by */}
+                                {user_name && (
+                                    <HStack className="items-center mt-1">
+                                        <MaterialIcons name="person" size={14} color="#6b7280" />
+                                        <Text className="text-sm text-gray-500 ml-1">
+                                            {user_name}
+                                        </Text>
+                                    </HStack>
+                                )}
                                 
                             </VStack>
                         </HStack>

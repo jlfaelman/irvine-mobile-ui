@@ -53,17 +53,25 @@ export  async function checkToken(){
     return token;
 }
 
-export  function saveToken(token: string) {
-    // Store raw token without prefix
-    AsyncStorage.setItem('token', token);
-    console.log('Token stored successfully')
-    return true;
+export async function saveToken(token: string) {
+    try {
+        await AsyncStorage.setItem('token', token);
+        console.log('Token stored successfully');
+        return true;
+    } catch (e) {
+        console.error('Failed to save token:', e);
+        return false;
+    }
 }
-export  function saveRefreshToken(token: string) {
-    // Store raw token without prefix
-    AsyncStorage.setItem('refreshToken', token);
-    console.log('Refresh token stored successfully')
-    return true;
+export async function saveRefreshToken(token: string) {
+    try {
+        await AsyncStorage.setItem('refreshToken', token);
+        console.log('Refresh token stored successfully');
+        return true;
+    } catch (e) {
+        console.error('Failed to save refresh token:', e);
+        return false;
+    }
 }
 
 export async function clearTokens() {

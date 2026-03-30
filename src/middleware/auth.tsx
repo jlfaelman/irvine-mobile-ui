@@ -46,8 +46,8 @@ export default async function authenticateUser(email: string, password: string) 
             const response = await isAuthenticated.json();
 
             const isTokenSaved = await saveToken(response?.token);
-            const isRefreshTokenSaved = await saveRefreshToken(response?.token);
-            const isInfoSaved = saveUserInformation();
+            const isRefreshTokenSaved = await saveRefreshToken(response?.refreshToken);
+            const isInfoSaved = await saveUserInformation();
             if (!isTokenSaved || !isRefreshTokenSaved || !isInfoSaved) return false;
             else return true;
         }

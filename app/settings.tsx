@@ -6,21 +6,36 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { clearAllStorage } from '@/src/middleware/configuration';
 import { loadDashboardInfo } from '@/src/middleware/dashboard';
-import { syncHistory, syncJobs } from '@/src/middleware/history';
+import { syncHistory } from '@/src/middleware/history';
+import { syncJobs } from '@/src/middleware/job';
 import { contaminantOptimizer } from '@/src/utils/contaminant-optimizer';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import useShowAlert from './screens/alert';
+
+const GPS_DEFAULT_KEY = 'settings_gps_default';
 
 export default function SettingsScreen() {
     const [gpsDefault, setGpsDefault] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
     const router = useRouter();
     const showAlert = useShowAlert();
+
+    useEffect(() => {
+        AsyncStorage.getItem(GPS_DEFAULT_KEY).then(val => {
+            if (val !== null) setGpsDefault(JSON.parse(val));
+        });
+    }, []);
+
+    const handleGpsToggle = async () => {
+        const next = !gpsDefault;
+        setGpsDefault(next);
+        await AsyncStorage.setItem(GPS_DEFAULT_KEY, JSON.stringify(next));
+    };
 
 
     const handleSyncNow = async () => {
@@ -214,7 +229,7 @@ export default function SettingsScreen() {
                         </HStack>
                         <Switch 
                             isChecked={gpsDefault} 
-                            onToggle={() => setGpsDefault(!gpsDefault)} 
+                            onToggle={handleGpsToggle} 
                         />
                     </Box>
                 </VStack>

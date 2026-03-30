@@ -16,12 +16,16 @@ export async function addHistory(job: object | History, isNew: boolean = false) 
                 return false;
             }
 
+            const firstname = await getUserInformation('firstname') ?? '';
+            const lastname = await getUserInformation('lastname') ?? '';
+
             let newHistory: History = {
                 ref_user: await getUserInformation('id'),
                 data: job,
                 status: 'pending',
                 created_at: convertToUTC(new Date().toISOString()),
-                finished_at: null
+                finished_at: null,
+                user_name: `${firstname} ${lastname}`.trim() || null
             }
 
             history.push(newHistory)
@@ -47,25 +51,47 @@ export async function addHistory(job: object | History, isNew: boolean = false) 
 
 // for updating status
 export async function syncHistory() {
-    const history: History[] = await fetchHistoryFromAPI();
+    const apiHistory: History[] = await fetchHistoryFromAPI();
+    const localHistory: History[] = await getHistory();
 
-    await clearHistory();
-
-    for (const h of history) {
-
-        await addHistory(h, false);
-
+    // Build a lookup of API items by the mobile-generated job id stored in data.id
+    const apiById = new Map<string, History>();
+    for (const h of apiHistory) {
+        const jobId = h.data?.id;
+        if (jobId != null) apiById.set(String(jobId), h);
     }
 
-    console.log('History synced')
+    // Update local items — only promote to a terminal status (completed/failed).
+    // If the API says 'active' (still processing), keep the local 'pending' so it
+    // stays visible in the history list (active items are filtered out of the UI).
+    // Also carry forward user_name from the API item when available.
+    const TERMINAL = new Set(['completed', 'failed']);
+    const merged: History[] = localHistory.map(localItem => {
+        const jobId = localItem.data?.id;
+        if (jobId != null && apiById.has(String(jobId))) {
+            const apiItem = apiById.get(String(jobId))!;
+            if (TERMINAL.has(apiItem.status)) return apiItem;
+            // Still processing — keep local status but update user_name if API has it
+            return { ...localItem, user_name: apiItem.user_name ?? localItem.user_name };
+        }
+        return localItem;
+    });
+
+    // Add API items from other users / other devices not present locally
+    for (const apiItem of apiHistory) {
+        const jobId = apiItem.data?.id;
+        const exists = jobId != null && merged.some(m => String(m.data?.id) === String(jobId));
+        if (!exists && apiItem.status !== 'active') merged.push(apiItem);
+    }
+
+    await AsyncStorage.setItem('history', JSON.stringify(merged));
+    console.log('History synced');
     return true;
 }
 
 export async function fetchHistoryFromAPI() {
 
     const API_URL = await getConfigURL();
-
-    const ref_user = await getUserInformation('id');
 
     if(!API_URL) throw new Error('Missing configuration_url');
 
@@ -76,15 +102,13 @@ export async function fetchHistoryFromAPI() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-            ref_user: ref_user,
-
-        }),
+        body: JSON.stringify({}),
 
     });
 
     const response = await request.json();
 
+    if (!response.history || !Array.isArray(response.history)) return [];
     return response.history;
 }
 
